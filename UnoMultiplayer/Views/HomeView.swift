@@ -8,37 +8,34 @@ struct HomeView: View {
             Spacer()
 
             VStack(spacing: 8) {
-                Text("🃏")
-                    .font(.system(size: 72))
-                Text("UNO")
-                    .font(.system(size: 48, weight: .black, design: .rounded))
-                Text("Multiplayer Card Game")
+                Text("🏖️")
+                    .font(.system(size: 64))
+                Text("Card Cabana")
+                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                    .foregroundStyle(AppTheme.textPrimary)
+                Text("Classic card games, anywhere")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppTheme.textSecondary)
             }
 
-            VStack(spacing: 16) {
+            VStack(spacing: 14) {
                 ForEach(PlayMode.allCases) { mode in
-                    Button {
-                        app.selectPlayMode(mode)
-                    } label: {
+                    Button { app.selectPlayMode(mode) } label: {
                         HStack(spacing: 16) {
                             Image(systemName: mode.icon)
                                 .font(.title2)
+                                .foregroundStyle(AppTheme.primary)
                                 .frame(width: 40)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(mode.title)
-                                    .font(.headline)
-                                Text(mode.subtitle)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                Text(mode.title).font(.headline).foregroundStyle(AppTheme.textPrimary)
+                                Text(mode.subtitle).font(.caption).foregroundStyle(AppTheme.textSecondary)
                             }
                             Spacer()
-                            Image(systemName: "chevron.right")
-                                .foregroundStyle(.secondary)
+                            Image(systemName: "chevron.right").foregroundStyle(AppTheme.textSecondary)
                         }
                         .padding()
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                        .background(AppTheme.surface, in: RoundedRectangle(cornerRadius: 16))
+                        .shadow(color: .black.opacity(0.05), radius: 6, y: 2)
                     }
                     .buttonStyle(.plain)
                 }
@@ -47,21 +44,13 @@ struct HomeView: View {
 
             Spacer()
 
-            Button {
-                app.screen = .settings
-            } label: {
+            Button { app.screen = .settings } label: {
                 Label("Settings", systemImage: "gearshape.fill")
                     .font(.subheadline)
+                    .foregroundStyle(AppTheme.textSecondary)
             }
             .padding(.bottom)
         }
         .navigationTitle("")
-    }
-}
-
-#Preview {
-    NavigationStack {
-        HomeView()
-            .environmentObject(AppViewModel())
     }
 }

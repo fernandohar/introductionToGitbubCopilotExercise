@@ -7,27 +7,20 @@ struct ContentView: View {
         NavigationStack {
             Group {
                 switch app.screen {
-                case .home:
-                    HomeView()
-                case .singlePlayerSetup:
-                    SinglePlayerSetupView()
-                case .multiplayerSetup:
-                    MultiplayerSetupView()
-                case .varietySelection:
-                    VarietySelectionView()
-                case .waitingLobby:
-                    WaitingLobbyView()
-                case .rulesReady:
-                    RulesReadyView()
-                case .game:
-                    GameView()
-                case .settings:
-                    SettingsView()
+                case .home: HomeView()
+                case .singlePlayerSetup: SinglePlayerSetupView()
+                case .multiplayerSetup: MultiplayerSetupView()
+                case .varietySelection: GameSelectionView()
+                case .waitingLobby: WaitingLobbyView()
+                case .rulesReady: RulesReadyView()
+                case .game: GameView()
+                case .settings: SettingsView()
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
+            .vacationBackground()
         }
-        .preferredColorScheme(.dark)
+        .tint(AppTheme.primary)
     }
 }
 

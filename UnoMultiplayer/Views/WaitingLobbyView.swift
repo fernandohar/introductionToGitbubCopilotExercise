@@ -3,50 +3,41 @@ import SwiftUI
 struct WaitingLobbyView: View {
     @EnvironmentObject private var app: AppViewModel
 
+    private var maxPlayers: Int {
+        app.selectedGame?.settings.maxPlayers ?? 4
+    }
+
     var body: some View {
         VStack(spacing: 24) {
             connectionBadge
 
-            if let variant = app.selectedVariant {
+            if let game = app.selectedGame {
                 HStack {
-                    Text(variant.icon)
-                        .font(.title)
+                    Text(game.icon).font(.title)
                     VStack(alignment: .leading) {
-                        Text(variant.name)
-                            .font(.headline)
-                        Text(variant.tagline)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        Text(game.name).font(.headline)
+                        Text(game.tagline).font(.caption).foregroundStyle(AppTheme.textSecondary)
                     }
                     Spacer()
                 }
                 .padding()
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .background(AppTheme.surface, in: RoundedRectangle(cornerRadius: 12))
                 .padding(.horizontal)
             }
 
             VStack(alignment: .leading, spacing: 12) {
-                Text("Players (\(app.players.count)/\(UnoEngine.maxPlayers))")
+                Text("Players (\(app.players.count)/\(maxPlayers))")
                     .font(.headline)
                     .padding(.horizontal)
 
                 ForEach(app.players) { player in
                     HStack {
                         Image(systemName: player.isHost ? "crown.fill" : "person.fill")
-                            .foregroundStyle(player.isHost ? .yellow : .secondary)
+                            .foregroundStyle(player.isHost ? AppTheme.nextBadge : AppTheme.textSecondary)
                         Text(player.displayName)
-                        if player.isNPC {
-                            Text("NPC")
-                                .font(.caption2)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(.blue.opacity(0.3), in: Capsule())
-                        }
                         Spacer()
                         if player.id == app.localPlayer?.id {
-                            Text("You")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            Text("You").font(.caption).foregroundStyle(AppTheme.textSecondary)
                         }
                     }
                     .padding(.horizontal)
@@ -54,26 +45,13 @@ struct WaitingLobbyView: View {
             }
 
             if app.isHost {
-                Text("Nearby players can join via Bluetooth or Wi-Fi")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-
-                Button("Show Rules & Ready Up") {
-                    app.proceedToRules()
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(app.players.count < UnoEngine.minPlayers)
+                Button("Show Rules & Ready Up") { app.proceedToRules() }
+                    .buttonStyle(.borderedProminent)
+                    .tint(AppTheme.primary)
+                    .disabled(app.players.count < (app.selectedGame?.settings.minPlayers ?? 2))
             } else {
                 Text("Waiting for host to start...")
-                    .foregroundStyle(.secondary)
-
-                if app.selectedVariant != nil {
-                    Text("Rules screen will appear when host is ready")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                    .foregroundStyle(AppTheme.textSecondary)
             }
 
             Spacer()
@@ -89,22 +67,19 @@ struct WaitingLobbyView: View {
 
     private var connectionBadge: some View {
         HStack {
-            Circle()
-                .fill(statusColor)
-                .frame(width: 10, height: 10)
-            Text(statusText)
-                .font(.subheadline)
+            Circle().fill(statusColor).frame(width: 10, height: 10)
+            Text(statusText).font(.subheadline)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(.ultraThinMaterial, in: Capsule())
+        .background(AppTheme.surface, in: Capsule())
     }
 
     private var statusColor: Color {
         switch app.connectionState {
-        case .hosting: .green
-        case .connected, .connecting: .yellow
-        case .disconnected: .red
+        case .hosting: AppTheme.primary
+        case .connected, .connecting: AppTheme.accent
+        case .disconnected: AppTheme.timerUrgent
         }
     }
 
@@ -115,12 +90,5 @@ struct WaitingLobbyView: View {
         case .connected: "Connected to room"
         case .disconnected: "Disconnected"
         }
-    }
-}
-
-#Preview {
-    NavigationStack {
-        WaitingLobbyView()
-            .environmentObject(AppViewModel())
     }
 }

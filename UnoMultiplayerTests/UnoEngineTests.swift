@@ -1,82 +1,54 @@
 import XCTest
 @testable import UnoMultiplayer
 
-final class UnoEngineTests: XCTestCase {
-    let variant = UnoVariant.classic
+final class GameEngineTests: XCTestCase {
+    let bigTwo = GameVariant.bigTwo
 
-    func testStartGameDealsSevenCards() throws {
+    func testBigTwoStartsWithCards() throws {
         let players = [
             Player(displayName: "Alice", isHost: true),
             Player(displayName: "Bob")
         ]
-
-        let state = try UnoEngine.startGame(players: players, variant: variant)
-
+        let state = try BigTwoEngine.startGame(players: players, variant: bigTwo)
         XCTAssertEqual(state.phase, .inProgress)
-        XCTAssertEqual(state.players.count, 2)
-        XCTAssertEqual(state.players[0].hand.count, 7)
-        XCTAssertEqual(state.players[1].hand.count, 7)
-        XCTAssertFalse(state.discardPile.isEmpty)
+        XCTAssertEqual(state.players[0].hand.count, 26)
         XCTAssertNotNil(state.turnDeadline)
     }
 
-    func testPlayMatchingNumberCard() throws {
+    func testBlackjackDealsTwoCards() throws {
+        let blackjack = GameVariant(
+            id: "blackjack",
+            name: "Blackjack",
+            tagline: "Test",
+            icon: "🂡",
+            accentColor: "#2A9D8F",
+            rules: "Test",
+            engineType: .blackjack,
+            settings: GameSettings(minPlayers: 1, maxPlayers: 1),
+            theme: CardTheme()
+        )
+        let players = [Player(displayName: "You")]
+        let state = try BlackjackEngine.startGame(players: players, variant: blackjack)
+        XCTAssertEqual(state.players[0].hand.count, 2)
+        XCTAssertEqual(state.dealerHand.count, 2)
+    }
+
+    func testBigTwoPlayRemovesCard() throws {
         let playerID = UUID()
+        let card = PlayingCard(suit: .diamonds, rank: .three)
         var players = [
-            Player(id: playerID, displayName: "Alice", hand: [Card(color: .red, value: .five)], isHost: true),
+            Player(id: playerID, displayName: "Alice", hand: [card], isHost: true),
             Player(displayName: "Bob")
         ]
-
         var state = GameState(
             phase: .inProgress,
             players: players,
-            discardPile: [Card(color: .blue, value: .five)],
-            activeColor: .blue,
-            variantID: variant.id
+            engineType: .bigTwo,
+            isTableOpen: true
         )
 
-        try UnoEngine.play(card: players[0].hand[0], from: playerID, in: &state, variant: variant)
-
+        try BigTwoEngine.play(card: card, from: playerID, in: &state, variant: bigTwo)
         XCTAssertTrue(state.players[0].hand.isEmpty)
         XCTAssertEqual(state.phase, .finished)
-        XCTAssertEqual(state.winnerID, playerID)
-    }
-
-    func testWildCardRequiresColor() {
-        let playerID = UUID()
-        let player = Player(id: playerID, displayName: "Alice", hand: [Card(color: .wild, value: .wild)], isHost: true)
-        var state = GameState(
-            phase: .inProgress,
-            players: [player],
-            discardPile: [Card(color: .red, value: .three)],
-            activeColor: .red,
-            variantID: variant.id
-        )
-
-        XCTAssertThrowsError(
-            try UnoEngine.play(card: player.hand[0], from: playerID, in: &state, variant: variant)
-        ) { error in
-            XCTAssertEqual(error as? UnoEngineError, .mustChooseColor)
-        }
-    }
-
-    func testAllWildVariantAllowsAnyCard() throws {
-        let allWildVariant = UnoVariant(
-            id: "test-all-wild",
-            name: "Test",
-            tagline: "Test",
-            icon: "🃏",
-            accentColor: "#000000",
-            rules: "Test",
-            deck: DeckConfiguration(allWild: true),
-            theme: CardTheme()
-        )
-
-        let players = [Player(displayName: "A"), Player(displayName: "B")]
-        let state = try UnoEngine.startGame(players: players, variant: allWildVariant)
-        let hand = state.players[0].hand
-        XCTAssertFalse(hand.isEmpty)
-        let playable = UnoEngine.playableCards(in: hand, for: state, variant: allWildVariant)
-        XCTAssertEqual(playable.count, hand.count)
     }
 }

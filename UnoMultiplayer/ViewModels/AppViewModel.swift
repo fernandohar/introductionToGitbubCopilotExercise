@@ -5,7 +5,7 @@ final class AppViewModel: ObservableObject, GameSessionDelegate {
     @Published var screen: AppScreen = .home
     @Published var playMode: PlayMode?
     @Published var multiplayerAction: MultiplayerAction?
-    @Published var selectedVariant: UnoVariant?
+    @Published var selectedGame: GameVariant?
     @Published var npcDifficulty: NPCDifficulty = .medium
     @Published var npcCount: Int = 3
     @Published var useOnlineNPC: Bool = false
@@ -14,8 +14,6 @@ final class AppViewModel: ObservableObject, GameSessionDelegate {
     @Published var players: [Player] = []
     @Published var gameState: GameState?
     @Published var errorMessage: String?
-    @Published var selectedCard: Card?
-    @Published var showColorPicker = false
 
     @Published var playerName: String {
         didSet { UserDefaults.standard.set(playerName, forKey: "playerName") }
@@ -34,9 +32,12 @@ final class AppViewModel: ObservableObject, GameSessionDelegate {
     }
 
     var isHost: Bool { session.isHost }
+    var isMyTurn: Bool { gameState?.currentPlayer?.id == session.localPlayerID }
 
-    var isMyTurn: Bool {
-        gameState?.currentPlayer?.id == session.localPlayerID
+    var activeGame: GameVariant? {
+        if let selectedGame { return selectedGame }
+        if let id = gameState?.gameID { return catalogService.game(id: id) }
+        return nil
     }
 
     init(catalogService: GameCatalogService = GameCatalogService()) {
@@ -46,15 +47,13 @@ final class AppViewModel: ObservableObject, GameSessionDelegate {
         self.session.delegate = self
     }
 
-    // MARK: - Navigation
-
     func goHome() {
         stopTimers()
         session.disconnect()
         screen = .home
         playMode = nil
         multiplayerAction = nil
-        selectedVariant = nil
+        selectedGame = nil
         gameState = nil
         players = []
     }
@@ -66,7 +65,6 @@ final class AppViewModel: ObservableObject, GameSessionDelegate {
 
     func selectMultiplayerAction(_ action: MultiplayerAction) {
         multiplayerAction = action
-
         if action == .createRoom {
             session = MultipeerGameSession()
             session.delegate = self
@@ -86,20 +84,21 @@ final class AppViewModel: ObservableObject, GameSessionDelegate {
         session.delegate = self
     }
 
-    func selectVariant(_ variant: UnoVariant) {
-        selectedVariant = variant
+    func selectGame(_ game: GameVariant) {
+        selectedGame = game
 
         if playMode == .singlePlayer {
+            let opponents = game.engineType == .blackjack ? 1 : npcCount
             (session as? LocalGameSession)?.configureSinglePlayer(
                 displayName: playerName,
-                npcCount: npcCount,
+                npcCount: opponents,
                 difficulty: npcDifficulty,
-                variant: variant
+                variant: game
             )
             screen = .rulesReady
             session.enterRulesPhase()
         } else if multiplayerAction == .createRoom {
-            session.selectVariant(variant)
+            session.selectVariant(game)
             screen = .waitingLobby
         } else {
             screen = .waitingLobby
@@ -107,57 +106,30 @@ final class AppViewModel: ObservableObject, GameSessionDelegate {
     }
 
     func proceedToRules() {
-        guard selectedVariant != nil || gameState?.variantID != nil else { return }
-        if isHost {
-            session.enterRulesPhase()
-        }
+        guard selectedGame != nil || gameState?.gameID != nil else { return }
+        if isHost { session.enterRulesPhase() }
         screen = .rulesReady
     }
 
-    func toggleReady() {
-        session.setReady()
+    func toggleReady() { session.setReady() }
+
+    func playCard(_ card: PlayingCard) {
+        session.sendPlayCard(cardID: card.id)
     }
 
-    func startGameIfReady() {
-        guard let variant = selectedVariant ?? catalogService.variant(id: gameState?.variantID ?? "") else { return }
-        if isHost && (gameState?.allPlayersReady == true || readyTimedOut) {
-            session.startGame(variant: variant)
-        }
-    }
+    func pass() { session.sendPass() }
+    func hit() { session.sendHit() }
+    func stand() { session.sendStand() }
 
-    private var readyTimedOut: Bool {
-        guard let deadline = gameState?.readyDeadline else { return false }
-        return Date() >= deadline
-    }
-
-    // MARK: - Gameplay
-
-    func playCard(_ card: Card, color: CardColor? = nil) {
-        if card.isWild && color == nil {
-            selectedCard = card
-            showColorPicker = true
-            return
-        }
-        session.sendPlayCard(cardID: card.id, chosenColor: color)
-        selectedCard = nil
-        showColorPicker = false
-    }
-
-    func drawCard() {
-        session.sendDrawCard()
-    }
-
-    func playableCards() -> [Card] {
+    func playableCards() -> [PlayingCard] {
         guard let hand = localPlayer?.hand,
               let state = gameState,
-              let variant = selectedVariant ?? catalogService.variant(id: state.variantID ?? "") else { return [] }
-        return UnoEngine.playableCards(in: hand, for: state, variant: variant)
+              let game = activeGame else { return [] }
+        return GameEngineRouter.playableCards(in: hand, for: state, variant: game)
     }
 
-    var activeVariant: UnoVariant? {
-        if let selectedVariant { return selectedVariant }
-        if let id = gameState?.variantID { return catalogService.variant(id: id) }
-        return nil
+    func canPass() -> Bool {
+        playableCards().isEmpty && gameState?.topCard != nil
     }
 
     // MARK: - Session delegate
@@ -165,14 +137,14 @@ final class AppViewModel: ObservableObject, GameSessionDelegate {
     nonisolated func session(_ session: GameSession, didReceive message: GameMessage) {
         Task { @MainActor in
             switch message {
-            case let .lobbyUpdate(players, variantID):
+            case let .lobbyUpdate(players, gameID):
                 self.players = players
-                if let variantID, self.selectedVariant == nil {
-                    self.selectedVariant = self.catalogService.variant(id: variantID)
+                if let gameID, self.selectedGame == nil {
+                    self.selectedGame = self.catalogService.game(id: gameID)
                 }
 
-            case let .selectVariant(variantID):
-                self.selectedVariant = self.catalogService.variant(id: variantID)
+            case let .selectVariant(gameID):
+                self.selectedGame = self.catalogService.game(id: gameID)
 
             case .enterRulesPhase:
                 self.screen = .rulesReady
@@ -209,34 +181,24 @@ final class AppViewModel: ObservableObject, GameSessionDelegate {
         }
     }
 
-    // MARK: - Timers
-
     private func startTurnTimer() {
         turnTimer?.invalidate()
         turnTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.tickTurnTimer()
-            }
+            Task { @MainActor in self?.tickTurnTimer() }
         }
     }
 
     private func tickTurnTimer() {
         guard gameState?.phase == .inProgress else { return }
         objectWillChange.send()
-
-        guard isMyTurn,
-              let remaining = gameState?.turnSecondsRemaining,
-              remaining <= 0 else { return }
-
+        guard isMyTurn, let remaining = gameState?.turnSecondsRemaining, remaining <= 0 else { return }
         session.handleTurnTimeout()
     }
 
     private func startReadyTimer() {
         readyTimer?.invalidate()
         readyTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.tickReadyTimer()
-            }
+            Task { @MainActor in self?.tickReadyTimer() }
         }
     }
 
@@ -244,13 +206,13 @@ final class AppViewModel: ObservableObject, GameSessionDelegate {
         guard gameState?.phase == .rulesReady else { return }
         objectWillChange.send()
 
-        if readyTimedOut {
-            if isHost {
-                startGameIfReady()
-            }
-        } else if gameState?.allPlayersReady == true, isHost {
-            startGameIfReady()
+        if gameState?.allPlayersReady == true, isHost, let game = activeGame {
+            session.startGame(variant: game)
+            return
         }
+
+        guard let deadline = gameState?.readyDeadline, Date() >= deadline, isHost, let game = activeGame else { return }
+        session.startGame(variant: game)
     }
 
     private func stopTimers() {

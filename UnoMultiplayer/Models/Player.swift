@@ -31,6 +31,5 @@ struct Player: Identifiable, Codable, Hashable {
     }
 
     var cardCount: Int { hand.count }
-    var hasUno: Bool { hand.count == 1 }
     var hasWon: Bool { hand.isEmpty }
 }

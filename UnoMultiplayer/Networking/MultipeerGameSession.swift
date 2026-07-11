@@ -10,7 +10,7 @@ final class MultipeerGameSession: NSObject, GameSession {
     private(set) var connectionState: ConnectionState = .disconnected
     var isHost: Bool { hostMode }
 
-    private let serviceType = "uno-game"
+    private let serviceType = "cardcabana"
     private var peerID: MCPeerID
     private var session: MCSession?
     private var advertiser: MCNearbyServiceAdvertiser?
@@ -19,7 +19,7 @@ final class MultipeerGameSession: NSObject, GameSession {
     private var hostMode = false
     private var localPlayerName = ""
     private var gameState = GameState()
-    private var variant: UnoVariant = .classic
+    private var variant: GameVariant = .bigTwo
     private var connectedPeers: [MCPeerID: UUID] = [:]
 
     override init() {
@@ -39,7 +39,7 @@ final class MultipeerGameSession: NSObject, GameSession {
         session = MCSession(peer: peerID, securityIdentity: nil, encryptionPreference: .required)
         session?.delegate = self
 
-        advertiser = MCNearbyServiceAdvertiser(peer: peerID, discoveryInfo: ["game": "uno"], serviceType: serviceType)
+        advertiser = MCNearbyServiceAdvertiser(peer: peerID, discoveryInfo: ["game": "cardcabana"], serviceType: serviceType)
         advertiser?.delegate = self
         advertiser?.startAdvertisingPeer()
 
@@ -64,58 +64,63 @@ final class MultipeerGameSession: NSObject, GameSession {
         delegate?.session(self, didChange: .connecting)
     }
 
-    func selectVariant(_ variant: UnoVariant) {
+    func selectVariant(_ variant: GameVariant) {
         guard hostMode else { return }
         self.variant = variant
-        gameState.variantID = variant.id
-        send(.selectVariant(variantID: variant.id))
+        gameState.gameID = variant.id
+        send(.selectVariant(gameID: variant.id))
         broadcastLobby()
     }
 
     func enterRulesPhase() {
         guard hostMode else { return }
         gameState.phase = .rulesReady
-        gameState.readyDeadline = Date().addingTimeInterval(TimeInterval(variant.deck.readyTimeLimit))
+        gameState.readyDeadline = Date().addingTimeInterval(TimeInterval(variant.settings.readyTimeLimit))
         send(.enterRulesPhase)
         publishState()
     }
 
     func setReady() {
         send(.setReady(playerID: localPlayerID))
-        if hostMode {
-            applyReady(localPlayerID)
-        }
+        if hostMode { applyReady(localPlayerID) }
     }
 
-    func startGame(variant: UnoVariant) {
+    func startGame(variant: GameVariant) {
         guard hostMode else { return }
         self.variant = variant
         do {
-            gameState = try UnoEngine.startGame(players: gameState.players, variant: variant)
+            gameState = try GameEngineRouter.startGame(players: gameState.players, variant: variant)
             send(.gameState(gameState))
         } catch {
             send(.error(error.localizedDescription))
         }
     }
 
-    func sendPlayCard(cardID: UUID, chosenColor: CardColor?) {
-        send(.playCard(cardID: cardID, chosenColor: chosenColor))
-        if hostMode {
-            handlePlayCard(cardID: cardID, chosenColor: chosenColor, playerID: localPlayerID)
-        }
+    func sendPlayCard(cardID: UUID) {
+        send(.playCard(cardID: cardID))
+        if hostMode { handlePlayCard(cardID: cardID, playerID: localPlayerID) }
     }
 
-    func sendDrawCard() {
-        send(.drawCard)
-        if hostMode {
-            handleDrawCard(playerID: localPlayerID)
-        }
+    func sendPass() {
+        send(.pass)
+        if hostMode { handlePass(playerID: localPlayerID) }
+    }
+
+    func sendHit() {
+        send(.hit)
+        if hostMode { handleHit(playerID: localPlayerID) }
+    }
+
+    func sendStand() {
+        send(.stand)
+        if hostMode { handleStand(playerID: localPlayerID) }
     }
 
     func handleTurnTimeout() {
-        send(.turnTimeout(playerID: localPlayerID))
-        if hostMode, let current = gameState.currentPlayer {
-            try? UnoEngine.handleTurnTimeout(for: current.id, in: &gameState, variant: variant)
+        guard let current = gameState.currentPlayer else { return }
+        send(.turnTimeout(playerID: current.id))
+        if hostMode {
+            try? GameEngineRouter.handleTurnTimeout(for: current.id, in: &gameState, variant: variant)
             publishState()
         }
     }
@@ -134,21 +139,18 @@ final class MultipeerGameSession: NSObject, GameSession {
     }
 
     private func broadcastLobby() {
-        let message = GameMessage.lobbyUpdate(players: gameState.players, variantID: gameState.variantID)
+        let message = GameMessage.lobbyUpdate(players: gameState.players, gameID: gameState.gameID)
         send(message)
         delegate?.session(self, didReceive: message)
     }
 
     private func publishState() {
         delegate?.session(self, didReceive: .gameState(gameState))
-        if hostMode {
-            send(.gameState(gameState))
-        }
+        if hostMode { send(.gameState(gameState)) }
     }
 
     private func send(_ message: GameMessage) {
         guard let session else { return }
-
         let peers = session.connectedPeers
         let shouldSendLocally: Bool = {
             switch message {
@@ -158,9 +160,7 @@ final class MultipeerGameSession: NSObject, GameSession {
         }()
 
         if peers.isEmpty {
-            if shouldSendLocally {
-                delegate?.session(self, didReceive: message)
-            }
+            if shouldSendLocally { delegate?.session(self, didReceive: message) }
             return
         }
 
@@ -181,18 +181,18 @@ final class MultipeerGameSession: NSObject, GameSession {
             gameState.players.append(player)
             broadcastLobby()
 
-        case let .lobbyUpdate(players, variantID):
+        case let .lobbyUpdate(players, gameID):
             gameState.players = players
-            gameState.variantID = variantID
+            gameState.gameID = gameID
             delegate?.session(self, didReceive: message)
 
-        case let .selectVariant(variantID):
-            gameState.variantID = variantID
+        case let .selectVariant(gameID):
+            gameState.gameID = gameID
             delegate?.session(self, didReceive: message)
 
         case .enterRulesPhase:
             gameState.phase = .rulesReady
-            gameState.readyDeadline = Date().addingTimeInterval(TimeInterval(variant.deck.readyTimeLimit))
+            gameState.readyDeadline = Date().addingTimeInterval(TimeInterval(variant.settings.readyTimeLimit))
             delegate?.session(self, didReceive: message)
             publishState()
 
@@ -204,19 +204,25 @@ final class MultipeerGameSession: NSObject, GameSession {
             gameState = state
             delegate?.session(self, didReceive: message)
 
-        case let .playCard(cardID, chosenColor):
+        case let .playCard(cardID):
             guard hostMode else { return }
-            let playerID = playerID(for: peer) ?? localPlayerID
-            handlePlayCard(cardID: cardID, chosenColor: chosenColor, playerID: playerID)
+            handlePlayCard(cardID: cardID, playerID: playerID(for: peer) ?? localPlayerID)
 
-        case .drawCard:
+        case .pass:
             guard hostMode else { return }
-            let playerID = playerID(for: peer) ?? localPlayerID
-            handleDrawCard(playerID: playerID)
+            handlePass(playerID: playerID(for: peer) ?? localPlayerID)
+
+        case .hit:
+            guard hostMode else { return }
+            handleHit(playerID: playerID(for: peer) ?? localPlayerID)
+
+        case .stand:
+            guard hostMode else { return }
+            handleStand(playerID: playerID(for: peer) ?? localPlayerID)
 
         case let .turnTimeout(playerID):
             guard hostMode else { return }
-            try? UnoEngine.handleTurnTimeout(for: playerID, in: &gameState, variant: variant)
+            try? GameEngineRouter.handleTurnTimeout(for: playerID, in: &gameState, variant: variant)
             publishState()
 
         case let .playerDisconnected(playerID):
@@ -236,30 +242,43 @@ final class MultipeerGameSession: NSObject, GameSession {
         let readyCount = gameState.players.filter(\.isReady).count
         let timedOut = gameState.readyDeadline.map { Date() >= $0 } ?? false
 
-        if gameState.allPlayersReady || (timedOut && readyCount >= UnoEngine.minPlayers) {
+        if gameState.allPlayersReady || (timedOut && readyCount >= variant.settings.minPlayers) {
             startGame(variant: variant)
         }
     }
 
-    private func handlePlayCard(cardID: UUID, chosenColor: CardColor?, playerID: UUID) {
+    private func handlePlayCard(cardID: UUID, playerID: UUID) {
         guard let playerIndex = gameState.players.firstIndex(where: { $0.id == playerID }),
               let card = gameState.players[playerIndex].hand.first(where: { $0.id == cardID }) else { return }
-
         do {
-            try UnoEngine.play(card: card, chosenColor: chosenColor, from: playerID, in: &gameState, variant: variant)
+            try GameEngineRouter.play(card: card, from: playerID, in: &gameState, variant: variant)
             publishState()
         } catch {
             send(.error(error.localizedDescription))
         }
     }
 
-    private func handleDrawCard(playerID: UUID) {
+    private func handlePass(playerID: UUID) {
         do {
-            if gameState.pendingDrawCount > 0 {
-                try UnoEngine.drawPendingCards(for: playerID, in: &gameState, variant: variant)
-            } else {
-                _ = try UnoEngine.drawCard(for: playerID, in: &gameState, variant: variant)
-            }
+            try GameEngineRouter.pass(from: playerID, in: &gameState, variant: variant)
+            publishState()
+        } catch {
+            send(.error(error.localizedDescription))
+        }
+    }
+
+    private func handleHit(playerID: UUID) {
+        do {
+            try GameEngineRouter.hit(from: playerID, in: &gameState, variant: variant)
+            publishState()
+        } catch {
+            send(.error(error.localizedDescription))
+        }
+    }
+
+    private func handleStand(playerID: UUID) {
+        do {
+            try GameEngineRouter.stand(from: playerID, in: &gameState, variant: variant)
             publishState()
         } catch {
             send(.error(error.localizedDescription))

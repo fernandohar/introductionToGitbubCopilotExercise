@@ -47,8 +47,8 @@ enum NPCDifficulty: String, Codable, CaseIterable, Identifiable {
     var description: String {
         switch self {
         case .easy: "Plays randomly — great for learning"
-        case .medium: "Uses basic strategy and action cards"
-        case .hard: "Aggressive play, tracks opponents"
+        case .medium: "Uses basic strategy"
+        case .hard: "Aggressive, tracks the table"
         }
     }
 }

@@ -1,228 +1,50 @@
 {
-  "version": 1,
-  "variants": [
+  "version": 2,
+  "games": [
     {
-      "id": "classic",
-      "name": "UNO Classic",
-      "tagline": "The original card-matching game",
-      "icon": "🃏",
-      "accentColor": "#E53935",
-      "rules": "Match cards by color or number.\n\n• Skip — next player loses a turn\n• Reverse — reverses play direction\n• Draw Two (+2) — next player draws 2\n• Wild — choose the next color\n• Wild Draw Four (+4) — choose color, next player draws 4\n\nSay UNO! with one card left. First to empty their hand wins.",
-      "deck": {
-        "allWild": false,
-        "includeSkip": true,
-        "includeReverse": true,
-        "includeDrawTwo": true,
-        "includeWild": true,
-        "includeWildDrawFour": true,
-        "allowStackingDraws": false,
-        "startingHandSize": 7,
+      "id": "big-two",
+      "name": "Big Two",
+      "tagline": "Cho Dai Di — Hong Kong classic",
+      "icon": "🀄",
+      "accentColor": "#E63946",
+      "rules": "Big Two (Cho Dai Di / Dai Di) is a climbing card game from Hong Kong.\n\n• Standard 52-card deck; 3♦ lowest, 2 highest\n• Suit order: ♦ < ♣ < ♥ < ♠\n• 2–4 players; all cards dealt evenly\n• Holder of 3♦ leads the first trick\n• Play a higher single card or pass\n• First to empty their hand wins",
+      "engineType": "bigTwo",
+      "settings": {
+        "minPlayers": 2,
+        "maxPlayers": 4,
         "turnTimeLimit": 30,
         "readyTimeLimit": 300
       },
       "theme": {
-        "red": "#E53935",
-        "blue": "#1E88E5",
-        "green": "#43A047",
-        "yellow": "#FDD835",
-        "wild": "#8E24AA",
-        "cardStyle": "classic"
+        "hearts": "#E63946",
+        "diamonds": "#E63946",
+        "clubs": "#1D3557",
+        "spades": "#1D3557",
+        "cardBack": "#4A6FA5",
+        "tableFelt": "#8FBC8F"
       }
     },
     {
-      "id": "all-wild",
-      "name": "UNO All Wild!",
-      "tagline": "Every card is a Wild card",
-      "icon": "🌈",
-      "accentColor": "#212121",
-      "rules": "In All Wild, every card is a Wild!\n\n• No number matching — play any card on your turn\n• Wild — choose the next color\n• Wild Draw Two — choose color, next player draws 2\n• Wild Draw Four — choose color, next player draws 4\n• Wild Targeted Draw Two — choose a player to draw 2\n• Wild Reverse — reverses direction\n• Wild Skip — skip the next player\n\nFast-paced chaos. First to empty their hand wins.",
-      "deck": {
-        "allWild": true,
-        "includeSkip": false,
-        "includeReverse": false,
-        "includeDrawTwo": false,
-        "includeWild": true,
-        "includeWildDrawFour": true,
-        "allowStackingDraws": false,
-        "startingHandSize": 7,
+      "id": "blackjack",
+      "name": "Blackjack",
+      "tagline": "Classic 21 — beat the dealer",
+      "icon": "🂡",
+      "accentColor": "#2A9D8F",
+      "rules": "Blackjack (21) — get closer to 21 than the dealer without going over.\n\n• Number cards = face value\n• Face cards = 10\n• Aces = 1 or 11\n• You and dealer each get 2 cards\n• Hit to draw, Stand to hold\n• Dealer hits until 17\n• Bust if you go over 21",
+      "engineType": "blackjack",
+      "settings": {
+        "minPlayers": 1,
+        "maxPlayers": 1,
         "turnTimeLimit": 30,
         "readyTimeLimit": 300
       },
       "theme": {
-        "red": "#212121",
-        "blue": "#424242",
-        "green": "#616161",
-        "yellow": "#757575",
-        "wild": "#000000",
-        "cardStyle": "all-wild"
-      }
-    },
-    {
-      "id": "golf",
-      "name": "UNO Golf",
-      "tagline": "Lowest score wins after 9 holes",
-      "icon": "⛳",
-      "accentColor": "#2E7D32",
-      "rules": "Golf-themed UNO with classic rules plus scoring.\n\n• Play classic UNO rules across 9 rounds (holes)\n• Number cards = face value points in hand at end of round\n• Draw Two = 20 points, Skip/Reverse = 20 points\n• Wild = 50 points, Wild Draw Four = 50 points\n\nLowest total score after 9 holes wins the match.",
-      "deck": {
-        "allWild": false,
-        "includeSkip": true,
-        "includeReverse": true,
-        "includeDrawTwo": true,
-        "includeWild": true,
-        "includeWildDrawFour": true,
-        "allowStackingDraws": false,
-        "startingHandSize": 7,
-        "turnTimeLimit": 30,
-        "readyTimeLimit": 300
-      },
-      "theme": {
-        "red": "#C62828",
-        "blue": "#1565C0",
-        "green": "#2E7D32",
-        "yellow": "#F9A825",
-        "wild": "#6D4C41",
-        "cardStyle": "golf"
-      }
-    },
-    {
-      "id": "dare",
-      "name": "UNO Dare!",
-      "tagline": "Action cards come with dares",
-      "icon": "😈",
-      "accentColor": "#C0C0C0",
-      "rules": "Classic UNO with Dare cards mixed in.\n\n• Dare cards replace some action cards\n• When you play a Dare card, the next player must complete the dare or draw 2 cards\n• House dares are shown on screen when a Dare is played\n• Standard Wild and +4 rules still apply\n\nFirst to empty their hand wins.",
-      "deck": {
-        "allWild": false,
-        "includeSkip": true,
-        "includeReverse": true,
-        "includeDrawTwo": true,
-        "includeWild": true,
-        "includeWildDrawFour": true,
-        "allowStackingDraws": false,
-        "startingHandSize": 7,
-        "turnTimeLimit": 30,
-        "readyTimeLimit": 300
-      },
-      "theme": {
-        "red": "#D32F2F",
-        "blue": "#1976D2",
-        "green": "#388E3C",
-        "yellow": "#FBC02D",
-        "wild": "#9E9E9E",
-        "cardStyle": "dare"
-      }
-    },
-    {
-      "id": "flex",
-      "name": "UNO Flex!",
-      "tagline": "Flex cards let you change the rules",
-      "icon": "💪",
-      "accentColor": "#00C853",
-      "rules": "Flex cards add a twist to every hand.\n\n• Flex Wild — play as any color AND any number\n• Standard action cards included\n• When you play a Flex card, you may change the active color freely\n• Draw stacking is not allowed\n\nOutsmart opponents with flexible plays. First to empty their hand wins.",
-      "deck": {
-        "allWild": false,
-        "includeSkip": true,
-        "includeReverse": true,
-        "includeDrawTwo": true,
-        "includeWild": true,
-        "includeWildDrawFour": true,
-        "allowStackingDraws": false,
-        "startingHandSize": 7,
-        "turnTimeLimit": 30,
-        "readyTimeLimit": 300
-      },
-      "theme": {
-        "red": "#FF1744",
-        "blue": "#2979FF",
-        "green": "#00E676",
-        "yellow": "#FFEA00",
-        "wild": "#00C853",
-        "cardStyle": "flex"
-      }
-    },
-    {
-      "id": "no-mercy",
-      "name": "UNO Show 'em No Mercy",
-      "tagline": "Stack draws, 7-0 rule, no mercy",
-      "icon": "🔥",
-      "accentColor": "#B71C1C",
-      "rules": "The ruthless version of UNO.\n\n• Draw card stacking is allowed — stack +2 on +2 and +4 on +4\n• 7-0 Rule: playing a 7 lets you swap hands with any player; playing a 0 rotates all hands\n• If you can't play, draw until you can\n• Skip and Reverse work as normal\n\nFirst to empty their hand wins. No mercy.",
-      "deck": {
-        "allWild": false,
-        "includeSkip": true,
-        "includeReverse": true,
-        "includeDrawTwo": true,
-        "includeWild": true,
-        "includeWildDrawFour": true,
-        "allowStackingDraws": true,
-        "startingHandSize": 7,
-        "turnTimeLimit": 30,
-        "readyTimeLimit": 300
-      },
-      "theme": {
-        "red": "#B71C1C",
-        "blue": "#0D47A1",
-        "green": "#1B5E20",
-        "yellow": "#F57F17",
-        "wild": "#4A148C",
-        "cardStyle": "no-mercy"
-      }
-    },
-    {
-      "id": "toy-story",
-      "name": "UNO Toy Story 4",
-      "tagline": "Disney Pixar themed cards",
-      "icon": "🤠",
-      "accentColor": "#42A5F5",
-      "rules": "Toy Story 4 themed UNO with classic rules.\n\n• Character-themed card art\n• Duke Caboom Wild Ride — special wild card\n• Standard Skip, Reverse, +2, Wild, +4 rules\n• Say UNO! when one card remains\n\nFirst player to play all cards wins.",
-      "deck": {
-        "allWild": false,
-        "includeSkip": true,
-        "includeReverse": true,
-        "includeDrawTwo": true,
-        "includeWild": true,
-        "includeWildDrawFour": true,
-        "allowStackingDraws": false,
-        "startingHandSize": 7,
-        "turnTimeLimit": 30,
-        "readyTimeLimit": 300
-      },
-      "theme": {
-        "red": "#EF5350",
-        "blue": "#42A5F5",
-        "green": "#66BB6A",
-        "yellow": "#FFEE58",
-        "wild": "#AB47BC",
-        "cardStyle": "toy-story"
-      }
-    },
-    {
-      "id": "x-games",
-      "name": "UNO X Games",
-      "tagline": "Rare extreme sports edition",
-      "icon": "🏂",
-      "accentColor": "#FF6F00",
-      "rules": "Limited edition X Games UNO with classic gameplay.\n\n• Extreme sports themed card designs\n• Standard UNO rules apply\n• Action cards: Skip, Reverse, +2, Wild, +4\n• 30 seconds per turn\n\nFirst to empty their hand wins.",
-      "deck": {
-        "allWild": false,
-        "includeSkip": true,
-        "includeReverse": true,
-        "includeDrawTwo": true,
-        "includeWild": true,
-        "includeWildDrawFour": true,
-        "allowStackingDraws": false,
-        "startingHandSize": 7,
-        "turnTimeLimit": 30,
-        "readyTimeLimit": 300
-      },
-      "theme": {
-        "red": "#FF3D00",
-        "blue": "#0091EA",
-        "green": "#00BFA5",
-        "yellow": "#FFAB00",
-        "wild": "#FF6F00",
-        "cardStyle": "x-games"
+        "hearts": "#E63946",
+        "diamonds": "#E63946",
+        "clubs": "#1D3557",
+        "spades": "#1D3557",
+        "cardBack": "#4A6FA5",
+        "tableFelt": "#8FBC8F"
       }
     }
   ]

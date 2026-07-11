@@ -17,23 +17,33 @@ struct GameState: Codable {
     var players: [Player]
     var currentPlayerIndex: Int
     var direction: TurnDirection
-    var drawPile: [Card]
-    var discardPile: [Card]
-    var activeColor: CardColor?
+    var drawPile: [PlayingCard]
+    var tableCards: [PlayingCard]
+    var dealerHand: [PlayingCard]
     var pendingDrawCount: Int
     var winnerID: UUID?
-    var variantID: String?
+    var gameID: String?
+    var engineType: GameEngineType?
     var readyDeadline: Date?
     var turnDeadline: Date?
+    var tableLabel: String?
+    var passesInRow: Int
+    var isTableOpen: Bool
+    var blackjackStatus: String?
 
     var currentPlayer: Player? {
         guard players.indices.contains(currentPlayerIndex) else { return nil }
         return players[currentPlayerIndex]
     }
 
-    var topCard: Card? {
-        discardPile.last
+    var nextPlayer: Player? {
+        guard !players.isEmpty else { return nil }
+        let delta = direction.rawValue
+        let nextIndex = (currentPlayerIndex + delta + players.count) % players.count
+        return players[nextIndex]
     }
+
+    var topCard: PlayingCard? { tableCards.last }
 
     var allPlayersReady: Bool {
         !players.isEmpty && players.allSatisfy(\.isReady)
@@ -54,26 +64,36 @@ struct GameState: Codable {
         players: [Player] = [],
         currentPlayerIndex: Int = 0,
         direction: TurnDirection = .clockwise,
-        drawPile: [Card] = [],
-        discardPile: [Card] = [],
-        activeColor: CardColor? = nil,
+        drawPile: [PlayingCard] = [],
+        tableCards: [PlayingCard] = [],
+        dealerHand: [PlayingCard] = [],
         pendingDrawCount: Int = 0,
         winnerID: UUID? = nil,
-        variantID: String? = nil,
+        gameID: String? = nil,
+        engineType: GameEngineType? = nil,
         readyDeadline: Date? = nil,
-        turnDeadline: Date? = nil
+        turnDeadline: Date? = nil,
+        tableLabel: String? = nil,
+        passesInRow: Int = 0,
+        isTableOpen: Bool = false,
+        blackjackStatus: String? = nil
     ) {
         self.phase = phase
         self.players = players
         self.currentPlayerIndex = currentPlayerIndex
         self.direction = direction
         self.drawPile = drawPile
-        self.discardPile = discardPile
-        self.activeColor = activeColor
+        self.tableCards = tableCards
+        self.dealerHand = dealerHand
         self.pendingDrawCount = pendingDrawCount
         self.winnerID = winnerID
-        self.variantID = variantID
+        self.gameID = gameID
+        self.engineType = engineType
         self.readyDeadline = readyDeadline
         self.turnDeadline = turnDeadline
+        self.tableLabel = tableLabel
+        self.passesInRow = passesInRow
+        self.isTableOpen = isTableOpen
+        self.blackjackStatus = blackjackStatus
     }
 }

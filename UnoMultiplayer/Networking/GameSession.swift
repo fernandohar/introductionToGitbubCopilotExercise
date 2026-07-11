@@ -2,14 +2,16 @@ import Foundation
 
 enum GameMessage: Codable {
     case joinLobby(playerName: String)
-    case lobbyUpdate(players: [Player], variantID: String?)
-    case selectVariant(variantID: String)
+    case lobbyUpdate(players: [Player], gameID: String?)
+    case selectVariant(gameID: String)
     case enterRulesPhase
     case setReady(playerID: UUID)
     case startGame
     case gameState(GameState)
-    case playCard(cardID: UUID, chosenColor: CardColor?)
-    case drawCard
+    case playCard(cardID: UUID)
+    case pass
+    case hit
+    case stand
     case turnTimeout(playerID: UUID)
     case playerDisconnected(playerID: UUID)
     case error(String)
@@ -35,12 +37,14 @@ protocol GameSession: AnyObject {
 
     func hostGame(displayName: String)
     func joinGame(displayName: String)
-    func selectVariant(_ variant: UnoVariant)
+    func selectVariant(_ variant: GameVariant)
     func enterRulesPhase()
     func setReady()
-    func startGame(variant: UnoVariant)
-    func sendPlayCard(cardID: UUID, chosenColor: CardColor?)
-    func sendDrawCard()
+    func startGame(variant: GameVariant)
+    func sendPlayCard(cardID: UUID)
+    func sendPass()
+    func sendHit()
+    func sendStand()
     func handleTurnTimeout()
     func disconnect()
 }

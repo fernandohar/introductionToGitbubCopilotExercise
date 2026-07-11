@@ -14,9 +14,9 @@ struct SettingsView: View {
                     get: { app.catalogService.remoteCatalogURL },
                     set: { app.catalogService.remoteCatalogURL = $0 }
                 ))
-                    .font(.caption)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
+                .font(.caption)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
 
                 Button {
                     Task { await app.catalogService.fetchLatestGames() }
@@ -24,43 +24,30 @@ struct SettingsView: View {
                     HStack {
                         Label("Get Latest Games", systemImage: "arrow.down.circle.fill")
                         Spacer()
-                        if app.catalogService.isLoading {
-                            ProgressView()
-                        }
+                        if app.catalogService.isLoading { ProgressView() }
                     }
                 }
                 .disabled(app.catalogService.isLoading)
 
-                Text("\(app.catalogService.variants.count) games available")
+                Text("\(app.catalogService.games.count) games available")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
                 if let error = app.catalogService.lastError {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.orange)
+                    Text(error).font(.caption).foregroundStyle(.orange)
                 }
             }
 
             Section("For Developers") {
-                Text("Add new UNO varieties by editing GameCatalog/catalog.json in the GitHub repo. Players fetch updates from Settings.")
+                Text("Add new card games by editing GameCatalog/catalog.json in the GitHub repo. Players fetch updates from Settings.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
             Section {
-                Button("Done") {
-                    app.screen = .home
-                }
+                Button("Done") { app.screen = .home }
             }
         }
         .navigationTitle("Settings")
-    }
-}
-
-#Preview {
-    NavigationStack {
-        SettingsView()
-            .environmentObject(AppViewModel())
     }
 }

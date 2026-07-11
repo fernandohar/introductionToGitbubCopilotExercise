@@ -9,7 +9,7 @@ final class LocalGameSession: GameSession {
     var isHost: Bool { true }
 
     private var gameState = GameState()
-    private var variant: UnoVariant = .classic
+    private var variant: GameVariant = .bigTwo
     private var npcTimer: Timer?
 
     init() {
@@ -27,34 +27,36 @@ final class LocalGameSession: GameSession {
         displayName: String,
         npcCount: Int,
         difficulty: NPCDifficulty,
-        variant: UnoVariant
+        variant: GameVariant
     ) {
         self.variant = variant
         var players = [Player(id: localPlayerID, displayName: displayName, isHost: true)]
-        for index in 1 ... npcCount {
-            players.append(
-                Player(
-                    displayName: "NPC \(index)",
-                    isNPC: true,
-                    npcDifficulty: difficulty
+
+        if variant.engineType == .blackjack {
+            players.append(Player(displayName: "Dealer", isNPC: true, npcDifficulty: difficulty))
+        } else {
+            for index in 1 ... npcCount {
+                players.append(
+                    Player(displayName: "Player \(index)", isNPC: true, npcDifficulty: difficulty)
                 )
-            )
+            }
         }
-        gameState = GameState(phase: .lobby, players: players, variantID: variant.id)
+
+        gameState = GameState(phase: .lobby, players: players, gameID: variant.id)
         connectionState = .hosting
         delegate?.session(self, didChange: .hosting)
         publishLobby()
     }
 
-    func selectVariant(_ variant: UnoVariant) {
+    func selectVariant(_ variant: GameVariant) {
         self.variant = variant
-        gameState.variantID = variant.id
+        gameState.gameID = variant.id
         publishLobby()
     }
 
     func enterRulesPhase() {
         gameState.phase = .rulesReady
-        gameState.readyDeadline = Date().addingTimeInterval(TimeInterval(variant.deck.readyTimeLimit))
+        gameState.readyDeadline = Date().addingTimeInterval(TimeInterval(variant.settings.readyTimeLimit))
         publishState()
     }
 
@@ -69,10 +71,10 @@ final class LocalGameSession: GameSession {
         }
     }
 
-    func startGame(variant: UnoVariant) {
+    func startGame(variant: GameVariant) {
         self.variant = variant
         do {
-            gameState = try UnoEngine.startGame(players: gameState.players, variant: variant)
+            gameState = try GameEngineRouter.startGame(players: gameState.players, variant: variant)
             publishState()
             scheduleNPCTurnIfNeeded()
         } catch {
@@ -80,12 +82,12 @@ final class LocalGameSession: GameSession {
         }
     }
 
-    func sendPlayCard(cardID: UUID, chosenColor: CardColor?) {
+    func sendPlayCard(cardID: UUID) {
         guard let playerIndex = gameState.players.firstIndex(where: { $0.id == localPlayerID }),
               let card = gameState.players[playerIndex].hand.first(where: { $0.id == cardID }) else { return }
 
         do {
-            try UnoEngine.play(card: card, chosenColor: chosenColor, from: localPlayerID, in: &gameState, variant: variant)
+            try GameEngineRouter.play(card: card, from: localPlayerID, in: &gameState, variant: variant)
             publishState()
             scheduleNPCTurnIfNeeded()
         } catch {
@@ -93,26 +95,39 @@ final class LocalGameSession: GameSession {
         }
     }
 
-    func sendDrawCard() {
+    func sendPass() {
         do {
-            if gameState.pendingDrawCount > 0 {
-                try UnoEngine.drawPendingCards(for: localPlayerID, in: &gameState, variant: variant)
-            } else {
-                _ = try UnoEngine.drawCard(for: localPlayerID, in: &gameState, variant: variant)
-            }
+            try GameEngineRouter.pass(from: localPlayerID, in: &gameState, variant: variant)
             publishState()
             scheduleNPCTurnIfNeeded()
+        } catch {
+            delegate?.session(self, didReceive: .error(error.localizedDescription))
+        }
+    }
+
+    func sendHit() {
+        do {
+            try GameEngineRouter.hit(from: localPlayerID, in: &gameState, variant: variant)
+            publishState()
+            scheduleNPCTurnIfNeeded()
+        } catch {
+            delegate?.session(self, didReceive: .error(error.localizedDescription))
+        }
+    }
+
+    func sendStand() {
+        do {
+            try GameEngineRouter.stand(from: localPlayerID, in: &gameState, variant: variant)
+            publishState()
         } catch {
             delegate?.session(self, didReceive: .error(error.localizedDescription))
         }
     }
 
     func handleTurnTimeout() {
-        guard gameState.phase == .inProgress else { return }
-        guard let current = gameState.currentPlayer else { return }
-
+        guard gameState.phase == .inProgress, let current = gameState.currentPlayer else { return }
         do {
-            try UnoEngine.handleTurnTimeout(for: current.id, in: &gameState, variant: variant)
+            try GameEngineRouter.handleTurnTimeout(for: current.id, in: &gameState, variant: variant)
             publishState()
             scheduleNPCTurnIfNeeded()
         } catch {
@@ -129,7 +144,7 @@ final class LocalGameSession: GameSession {
     }
 
     private func publishLobby() {
-        delegate?.session(self, didReceive: .lobbyUpdate(players: gameState.players, variantID: gameState.variantID))
+        delegate?.session(self, didReceive: .lobbyUpdate(players: gameState.players, gameID: gameState.gameID))
     }
 
     private func publishState() {
@@ -160,22 +175,20 @@ final class LocalGameSession: GameSession {
               current.isNPC,
               let difficulty = current.npcDifficulty else { return }
 
-        if let move = NPCPlayer.chooseMove(for: current, in: gameState, variant: variant, difficulty: difficulty) {
-            do {
-                try UnoEngine.play(
-                    card: move.card,
-                    chosenColor: move.color,
-                    from: current.id,
-                    in: &gameState,
-                    variant: variant
-                )
-            } catch {
-                _ = try? UnoEngine.drawCard(for: current.id, in: &gameState, variant: variant)
+        switch variant.engineType {
+        case .bigTwo:
+            let move = NPCPlayer.chooseBigTwoMove(for: current, in: gameState, difficulty: difficulty)
+            if move.shouldPass {
+                try? GameEngineRouter.pass(from: current.id, in: &gameState, variant: variant)
+            } else if let card = move.card {
+                try? GameEngineRouter.play(card: card, from: current.id, in: &gameState, variant: variant)
             }
-        } else if gameState.pendingDrawCount > 0 {
-            try? UnoEngine.drawPendingCards(for: current.id, in: &gameState, variant: variant)
-        } else {
-            _ = try? UnoEngine.drawCard(for: current.id, in: &gameState, variant: variant)
+        case .blackjack:
+            if NPCPlayer.chooseBlackjackAction(for: current, in: gameState, difficulty: difficulty) {
+                try? GameEngineRouter.hit(from: current.id, in: &gameState, variant: variant)
+            } else {
+                try? GameEngineRouter.stand(from: current.id, in: &gameState, variant: variant)
+            }
         }
 
         publishState()

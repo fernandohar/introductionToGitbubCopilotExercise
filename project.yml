@@ -23,7 +23,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.unomultiplayer.app
-        INFOPLIST_KEY_CFBundleDisplayName: Uno Multiplayer
+        INFOPLIST_KEY_CFBundleDisplayName: Card Cabana
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
@@ -33,7 +33,7 @@ targets:
         NSLocalNetworkUsageDescription: Used to discover and connect to nearby players for local multiplayer games.
         NSBluetoothAlwaysUsageDescription: Used to connect with nearby players for offline multiplayer via Bluetooth.
         NSBonjourServices:
-          - _uno-game._tcp
+          - _cardcabana._tcp
 
   UnoMultiplayerTests:
     type: bundle.unit-test

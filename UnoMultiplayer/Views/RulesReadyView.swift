@@ -5,70 +5,52 @@ struct RulesReadyView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if let variant = app.activeVariant {
+            if let game = app.activeGame {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         HStack {
-                            Text(variant.icon)
-                                .font(.system(size: 48))
+                            Text(game.icon).font(.system(size: 48))
                             VStack(alignment: .leading) {
-                                Text(variant.name)
-                                    .font(.title2.bold())
-                                Text(variant.tagline)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                Text(game.name).font(.title2.bold())
+                                Text(game.tagline).font(.caption).foregroundStyle(AppTheme.textSecondary)
                             }
                         }
 
                         Divider()
 
-                        Text("Rules")
-                            .font(.headline)
-
-                        Text(variant.rules)
-                            .font(.body)
-                            .foregroundStyle(.secondary)
+                        Text("Rules").font(.headline)
+                        Text(game.rules).font(.body).foregroundStyle(AppTheme.textSecondary)
 
                         Divider()
 
-                        Text("Game Settings")
-                            .font(.headline)
-
-                        Label("\(variant.deck.turnTimeLimit)s per turn", systemImage: "timer")
+                        Label("\(game.settings.turnTimeLimit)s per turn", systemImage: "timer")
                         Label("Works offline via Bluetooth", systemImage: "antenna.radiowaves.left.and.right")
-                        Label("Up to \(UnoEngine.maxPlayers) players", systemImage: "person.3")
                     }
                     .padding()
                 }
 
                 VStack(spacing: 12) {
                     if let remaining = app.gameState?.readySecondsRemaining {
-                        HStack {
-                            Image(systemName: "clock")
-                            Text("Auto-start in \(formatTime(remaining))")
-                                .font(.caption)
-                                .foregroundStyle(remaining < 60 ? .red : .secondary)
-                        }
+                        Label("Auto-start in \(formatTime(remaining))", systemImage: "clock")
+                            .font(.caption)
+                            .foregroundStyle(remaining < 60 ? AppTheme.timerUrgent : AppTheme.textSecondary)
                     }
 
                     readyPlayerList
 
-                    Button {
-                        app.toggleReady()
-                    } label: {
-                        HStack {
-                            Text(localPlayerReady ? "👌 Ready!" : "👌 Ready")
-                                .font(.title3.bold())
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(localPlayerReady ? Color.green.opacity(0.3) : Color.blue, in: RoundedRectangle(cornerRadius: 16))
+                    Button { app.toggleReady() } label: {
+                        Text(localPlayerReady ? "👌 Ready!" : "👌 Ready")
+                            .font(.title3.bold())
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(localPlayerReady ? AppTheme.primary.opacity(0.2) : AppTheme.primary, in: RoundedRectangle(cornerRadius: 16))
+                            .foregroundStyle(localPlayerReady ? AppTheme.primary : .white)
                     }
                     .buttonStyle(.plain)
                     .disabled(localPlayerReady)
                 }
                 .padding()
-                .background(.ultraThinMaterial)
+                .background(AppTheme.surface)
             }
         }
         .navigationTitle("Rules")
@@ -80,19 +62,14 @@ struct RulesReadyView: View {
         }
     }
 
-    private var localPlayerReady: Bool {
-        app.localPlayer?.isReady ?? false
-    }
+    private var localPlayerReady: Bool { app.localPlayer?.isReady ?? false }
 
     private var readyPlayerList: some View {
         HStack(spacing: 8) {
             ForEach(app.players) { player in
                 VStack(spacing: 4) {
-                    Text(player.isReady ? "👌" : "⏳")
-                        .font(.title2)
-                    Text(player.displayName)
-                        .font(.caption2)
-                        .lineLimit(1)
+                    Text(player.isReady ? "👌" : "⏳").font(.title2)
+                    Text(player.displayName).font(.caption2).lineLimit(1)
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -100,15 +77,6 @@ struct RulesReadyView: View {
     }
 
     private func formatTime(_ seconds: Int) -> String {
-        let minutes = seconds / 60
-        let secs = seconds % 60
-        return String(format: "%d:%02d", minutes, secs)
-    }
-}
-
-#Preview {
-    NavigationStack {
-        RulesReadyView()
-            .environmentObject(AppViewModel())
+        String(format: "%d:%02d", seconds / 60, seconds % 60)
     }
 }
