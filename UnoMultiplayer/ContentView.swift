@@ -1,23 +1,37 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject private var viewModel: GameViewModel
+    @EnvironmentObject private var app: AppViewModel
 
     var body: some View {
         NavigationStack {
             Group {
-                if viewModel.gameState?.phase == .inProgress || viewModel.gameState?.phase == .finished {
+                switch app.screen {
+                case .home:
+                    HomeView()
+                case .singlePlayerSetup:
+                    SinglePlayerSetupView()
+                case .multiplayerSetup:
+                    MultiplayerSetupView()
+                case .varietySelection:
+                    VarietySelectionView()
+                case .waitingLobby:
+                    WaitingLobbyView()
+                case .rulesReady:
+                    RulesReadyView()
+                case .game:
                     GameView()
-                } else {
-                    LobbyView()
+                case .settings:
+                    SettingsView()
                 }
             }
-            .navigationTitle("Uno")
+            .navigationBarTitleDisplayMode(.inline)
         }
+        .preferredColorScheme(.dark)
     }
 }
 
 #Preview {
     ContentView()
-        .environmentObject(GameViewModel())
+        .environmentObject(AppViewModel())
 }

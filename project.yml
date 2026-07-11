@@ -18,6 +18,8 @@ targets:
     platform: iOS
     sources:
       - path: UnoMultiplayer
+    resources:
+      - path: UnoMultiplayer/Resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.unomultiplayer.app
@@ -29,6 +31,7 @@ targets:
       path: UnoMultiplayer/Info.plist
       properties:
         NSLocalNetworkUsageDescription: Used to discover and connect to nearby players for local multiplayer games.
+        NSBluetoothAlwaysUsageDescription: Used to connect with nearby players for offline multiplayer via Bluetooth.
         NSBonjourServices:
           - _uno-game._tcp
 

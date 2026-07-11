@@ -2,6 +2,7 @@ import Foundation
 
 enum GamePhase: String, Codable {
     case lobby
+    case rulesReady
     case inProgress
     case finished
 }
@@ -21,6 +22,9 @@ struct GameState: Codable {
     var activeColor: CardColor?
     var pendingDrawCount: Int
     var winnerID: UUID?
+    var variantID: String?
+    var readyDeadline: Date?
+    var turnDeadline: Date?
 
     var currentPlayer: Player? {
         guard players.indices.contains(currentPlayerIndex) else { return nil }
@@ -29,6 +33,20 @@ struct GameState: Codable {
 
     var topCard: Card? {
         discardPile.last
+    }
+
+    var allPlayersReady: Bool {
+        !players.isEmpty && players.allSatisfy(\.isReady)
+    }
+
+    var readySecondsRemaining: Int? {
+        guard let readyDeadline else { return nil }
+        return max(0, Int(readyDeadline.timeIntervalSinceNow))
+    }
+
+    var turnSecondsRemaining: Int? {
+        guard let turnDeadline else { return nil }
+        return max(0, Int(turnDeadline.timeIntervalSinceNow))
     }
 
     init(
@@ -40,7 +58,10 @@ struct GameState: Codable {
         discardPile: [Card] = [],
         activeColor: CardColor? = nil,
         pendingDrawCount: Int = 0,
-        winnerID: UUID? = nil
+        winnerID: UUID? = nil,
+        variantID: String? = nil,
+        readyDeadline: Date? = nil,
+        turnDeadline: Date? = nil
     ) {
         self.phase = phase
         self.players = players
@@ -51,5 +72,8 @@ struct GameState: Codable {
         self.activeColor = activeColor
         self.pendingDrawCount = pendingDrawCount
         self.winnerID = winnerID
+        self.variantID = variantID
+        self.readyDeadline = readyDeadline
+        self.turnDeadline = turnDeadline
     }
 }

@@ -4,6 +4,7 @@ struct CardView: View {
     let card: Card
     var activeColor: CardColor?
     var isPlayable: Bool = true
+    var theme: CardTheme?
 
     var body: some View {
         ZStack {
@@ -17,6 +18,7 @@ struct CardView: View {
                     .font(.caption2.bold())
                 Text(card.value.displayName)
                     .font(.title3.bold())
+                    .minimumScaleFactor(0.6)
             }
             .foregroundStyle(.white)
         }
@@ -28,6 +30,9 @@ struct CardView: View {
 
     private var cardBackground: Color {
         let color = activeColor ?? card.color
+        if let theme {
+            return theme.swiftUIColor(for: color)
+        }
         switch color {
         case .red: return .red
         case .blue: return .blue
@@ -39,6 +44,7 @@ struct CardView: View {
 }
 
 struct ColorPickerSheet: View {
+    var theme: CardTheme?
     let onSelect: (CardColor) -> Void
     @Environment(\.dismiss) private var dismiss
 
@@ -66,6 +72,7 @@ struct ColorPickerSheet: View {
     }
 
     private func colorFor(_ color: CardColor) -> Color {
+        if let theme { return theme.swiftUIColor(for: color) }
         switch color {
         case .red: .red
         case .blue: .blue

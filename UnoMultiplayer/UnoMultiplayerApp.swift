@@ -2,12 +2,12 @@ import SwiftUI
 
 @main
 struct UnoMultiplayerApp: App {
-    @StateObject private var viewModel = GameViewModel()
+    @StateObject private var appViewModel = AppViewModel()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(viewModel)
+                .environmentObject(appViewModel)
         }
     }
 }

@@ -19,34 +19,41 @@ enum UnoEngineError: LocalizedError, Equatable {
 }
 
 struct UnoEngine {
-    static let startingHandSize = 7
     static let minPlayers = 2
     static let maxPlayers = 10
 
-    static func startGame(players: [Player]) throws -> GameState {
+    static func startGame(players: [Player], variant: UnoVariant) throws -> GameState {
         guard players.count >= minPlayers else {
             throw UnoEngineError.notEnoughPlayers
         }
 
-        var deck = Deck()
+        var deck = Deck(configuration: variant.deck)
         var mutablePlayers = players
 
         for index in mutablePlayers.indices {
-            mutablePlayers[index].hand = (0 ..< startingHandSize).compactMap { _ in deck.draw() }
+            mutablePlayers[index].hand = (0 ..< variant.deck.startingHandSize).compactMap { _ in deck.draw() }
+            mutablePlayers[index].isReady = false
         }
 
         var discardPile: [Card] = []
         var activeColor: CardColor?
 
-        while let card = deck.draw() {
-            if card.isWild {
-                deck.cards.append(card)
-                deck.cards.shuffle()
-                continue
+        if variant.deck.allWild {
+            if let card = deck.draw() {
+                discardPile.append(card)
+                activeColor = CardColor.allCases.filter { $0 != .wild }.randomElement()
             }
-            discardPile.append(card)
-            activeColor = card.color
-            break
+        } else {
+            while let card = deck.draw() {
+                if card.isWild {
+                    deck.cards.append(card)
+                    deck.cards.shuffle()
+                    continue
+                }
+                discardPile.append(card)
+                activeColor = card.color
+                break
+            }
         }
 
         return GameState(
@@ -56,26 +63,37 @@ struct UnoEngine {
             direction: .clockwise,
             drawPile: deck.cards,
             discardPile: discardPile,
-            activeColor: activeColor
+            activeColor: activeColor,
+            variantID: variant.id,
+            turnDeadline: Date().addingTimeInterval(TimeInterval(variant.deck.turnTimeLimit))
         )
     }
 
-    static func playableCards(in hand: [Card], for state: GameState) -> [Card] {
+    static func playableCards(in hand: [Card], for state: GameState, variant: UnoVariant) -> [Card] {
+        if variant.deck.allWild {
+            return hand
+        }
         guard let topCard = state.topCard else { return hand }
         return hand.filter { card in
             if state.pendingDrawCount > 0 {
-                return card.value == .drawTwo || card.value == .wildDrawFour
+                if variant.deck.allowStackingDraws {
+                    return card.value == .drawTwo || card.value == .wildDrawFour
+                }
+                return false
             }
             return card.matches(topCard: topCard, activeColor: state.activeColor)
         }
     }
 
-    static func canPlay(card: Card, from playerID: UUID, in state: GameState) -> Bool {
+    static func canPlay(card: Card, from playerID: UUID, in state: GameState, variant: UnoVariant) -> Bool {
         guard state.phase == .inProgress,
-              state.currentPlayer?.id == playerID,
-              let topCard = state.topCard else { return false }
+              state.currentPlayer?.id == playerID else { return false }
 
-        if card.isWild && card.value == .wildDrawFour {
+        if variant.deck.allWild { return true }
+
+        guard let topCard = state.topCard else { return false }
+
+        if card.isWild && card.value == .wildDrawFour && !variant.deck.allowStackingDraws {
             let hasPlayableNonWild = state.currentPlayer?.hand.contains { handCard in
                 !handCard.isWild && handCard.matches(topCard: topCard, activeColor: state.activeColor)
             } ?? false
@@ -83,7 +101,10 @@ struct UnoEngine {
         }
 
         if state.pendingDrawCount > 0 {
-            return card.value == .drawTwo || card.value == .wildDrawFour
+            if variant.deck.allowStackingDraws {
+                return card.value == .drawTwo || card.value == .wildDrawFour
+            }
+            return false
         }
 
         return card.matches(topCard: topCard, activeColor: state.activeColor)
@@ -93,20 +114,24 @@ struct UnoEngine {
         card: Card,
         chosenColor: CardColor? = nil,
         from playerID: UUID,
-        in state: inout GameState
+        in state: inout GameState,
+        variant: UnoVariant
     ) throws {
         guard state.phase == .inProgress else { throw UnoEngineError.gameNotInProgress }
         guard state.currentPlayer?.id == playerID else { throw UnoEngineError.notPlayersTurn }
-        guard canPlay(card: card, from: playerID, in: state) else { throw UnoEngineError.invalidCard }
+        guard canPlay(card: card, from: playerID, in: state, variant: variant) else {
+            throw UnoEngineError.invalidCard
+        }
 
         guard let playerIndex = state.players.firstIndex(where: { $0.id == playerID }),
               let cardIndex = state.players[playerIndex].hand.firstIndex(of: card) else {
             throw UnoEngineError.invalidCard
         }
 
-        if card.isWild {
-            guard let chosenColor, chosenColor != .wild else { throw UnoEngineError.mustChooseColor }
-            state.activeColor = chosenColor
+        if card.isWild || variant.deck.allWild {
+            let color = chosenColor ?? CardColor.allCases.filter { $0 != .wild }.randomElement()
+            guard let color, color != .wild else { throw UnoEngineError.mustChooseColor }
+            state.activeColor = color
         } else {
             state.activeColor = card.color
         }
@@ -117,14 +142,15 @@ struct UnoEngine {
         if state.players[playerIndex].hasWon {
             state.phase = .finished
             state.winnerID = playerID
+            state.turnDeadline = nil
             return
         }
 
-        applyCardEffect(card, in: &state)
-        advanceTurn(in: &state)
+        applyCardEffect(card, in: &state, variant: variant)
+        resetTurnDeadline(in: &state, variant: variant)
     }
 
-    static func drawCard(for playerID: UUID, in state: inout GameState) throws -> Card? {
+    static func drawCard(for playerID: UUID, in state: inout GameState, variant: UnoVariant) throws -> Card? {
         guard state.phase == .inProgress else { throw UnoEngineError.gameNotInProgress }
         guard state.currentPlayer?.id == playerID else { throw UnoEngineError.notPlayersTurn }
 
@@ -137,17 +163,17 @@ struct UnoEngine {
         state.drawPile.removeFirst()
         state.players[playerIndex].hand.append(drawnCard)
 
-        if state.pendingDrawCount > 0 {
-            state.pendingDrawCount = max(0, state.pendingDrawCount - 1)
-            if state.pendingDrawCount == 0 {
-                advanceTurn(in: &state)
-            }
+        if state.pendingDrawCount > 0 && !variant.deck.allowStackingDraws {
+            try drawPendingCards(for: playerID, in: &state, variant: variant)
+        } else {
+            advanceTurn(in: &state, variant: variant)
+            resetTurnDeadline(in: &state, variant: variant)
         }
 
         return drawnCard
     }
 
-    static func drawPendingCards(for playerID: UUID, in state: inout GameState) throws {
+    static func drawPendingCards(for playerID: UUID, in state: inout GameState, variant: UnoVariant) throws {
         guard state.pendingDrawCount > 0 else { return }
         guard let playerIndex = state.players.firstIndex(where: { $0.id == playerID }) else { return }
 
@@ -160,31 +186,46 @@ struct UnoEngine {
         }
 
         state.pendingDrawCount = 0
-        advanceTurn(in: &state)
+        advanceTurn(in: &state, variant: variant)
+        resetTurnDeadline(in: &state, variant: variant)
     }
 
-    private static func applyCardEffect(_ card: Card, in state: inout GameState) {
+    static func handleTurnTimeout(for playerID: UUID, in state: inout GameState, variant: UnoVariant) throws {
+        guard state.currentPlayer?.id == playerID else { return }
+        if state.pendingDrawCount > 0 {
+            try drawPendingCards(for: playerID, in: &state, variant: variant)
+        } else {
+            _ = try drawCard(for: playerID, in: &state, variant: variant)
+        }
+    }
+
+    static func resetTurnDeadline(in state: inout GameState, variant: UnoVariant) {
+        state.turnDeadline = Date().addingTimeInterval(TimeInterval(variant.deck.turnTimeLimit))
+    }
+
+    private static func applyCardEffect(_ card: Card, in state: inout GameState, variant: UnoVariant) {
         switch card.value {
         case .skip:
-            advanceTurn(in: &state)
+            advanceTurn(in: &state, variant: variant)
         case .reverse:
             state.direction = state.direction == .clockwise ? .counterClockwise : .clockwise
             if state.players.count == 2 {
-                advanceTurn(in: &state)
+                advanceTurn(in: &state, variant: variant)
             }
         case .drawTwo:
             state.pendingDrawCount += 2
         case .wildDrawFour:
             state.pendingDrawCount += 4
         default:
-            break
+            advanceTurn(in: &state, variant: variant)
         }
     }
 
-    private static func advanceTurn(in state: inout GameState) {
+    private static func advanceTurn(in state: inout GameState, variant: UnoVariant) {
         guard !state.players.isEmpty else { return }
         let delta = state.direction.rawValue
         state.currentPlayerIndex = (state.currentPlayerIndex + delta + state.players.count) % state.players.count
+        resetTurnDeadline(in: &state, variant: variant)
     }
 
     private static func refillDrawPileIfNeeded(in state: inout GameState) {

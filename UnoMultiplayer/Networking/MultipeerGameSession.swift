@@ -1,13 +1,14 @@
 import Foundation
 import MultipeerConnectivity
+import UIKit
 
-/// Local multiplayer using Apple's Multipeer Connectivity framework.
-/// Players on the same Wi-Fi network can discover and join games without a backend server.
+/// Peer-to-peer multiplayer over Bluetooth and Wi-Fi — works offline (e.g. on an airplane).
 final class MultipeerGameSession: NSObject, GameSession {
     weak var delegate: GameSessionDelegate?
 
     let localPlayerID: UUID
     private(set) var connectionState: ConnectionState = .disconnected
+    var isHost: Bool { hostMode }
 
     private let serviceType = "uno-game"
     private var peerID: MCPeerID
@@ -15,9 +16,10 @@ final class MultipeerGameSession: NSObject, GameSession {
     private var advertiser: MCNearbyServiceAdvertiser?
     private var browser: MCNearbyServiceBrowser?
 
-    private var localPlayerName: String = ""
-    private var isHost = false
+    private var hostMode = false
+    private var localPlayerName = ""
     private var gameState = GameState()
+    private var variant: UnoVariant = .classic
     private var connectedPeers: [MCPeerID: UUID] = [:]
 
     override init() {
@@ -29,7 +31,7 @@ final class MultipeerGameSession: NSObject, GameSession {
     func hostGame(displayName: String) {
         disconnect()
         localPlayerName = displayName
-        isHost = true
+        hostMode = true
 
         let localPlayer = Player(id: localPlayerID, displayName: displayName, isHost: true)
         gameState = GameState(phase: .lobby, players: [localPlayer])
@@ -37,7 +39,7 @@ final class MultipeerGameSession: NSObject, GameSession {
         session = MCSession(peer: peerID, securityIdentity: nil, encryptionPreference: .required)
         session?.delegate = self
 
-        advertiser = MCNearbyServiceAdvertiser(peer: peerID, discoveryInfo: nil, serviceType: serviceType)
+        advertiser = MCNearbyServiceAdvertiser(peer: peerID, discoveryInfo: ["game": "uno"], serviceType: serviceType)
         advertiser?.delegate = self
         advertiser?.startAdvertisingPeer()
 
@@ -46,10 +48,10 @@ final class MultipeerGameSession: NSObject, GameSession {
         broadcastLobby()
     }
 
-    func joinGame(displayName: String, roomCode: String) {
+    func joinGame(displayName: String) {
         disconnect()
         localPlayerName = displayName
-        isHost = false
+        hostMode = false
 
         session = MCSession(peer: peerID, securityIdentity: nil, encryptionPreference: .required)
         session?.delegate = self
@@ -62,10 +64,34 @@ final class MultipeerGameSession: NSObject, GameSession {
         delegate?.session(self, didChange: .connecting)
     }
 
-    func startGame() {
-        guard isHost else { return }
+    func selectVariant(_ variant: UnoVariant) {
+        guard hostMode else { return }
+        self.variant = variant
+        gameState.variantID = variant.id
+        send(.selectVariant(variantID: variant.id))
+        broadcastLobby()
+    }
+
+    func enterRulesPhase() {
+        guard hostMode else { return }
+        gameState.phase = .rulesReady
+        gameState.readyDeadline = Date().addingTimeInterval(TimeInterval(variant.deck.readyTimeLimit))
+        send(.enterRulesPhase)
+        publishState()
+    }
+
+    func setReady() {
+        send(.setReady(playerID: localPlayerID))
+        if hostMode {
+            applyReady(localPlayerID)
+        }
+    }
+
+    func startGame(variant: UnoVariant) {
+        guard hostMode else { return }
+        self.variant = variant
         do {
-            gameState = try UnoEngine.startGame(players: gameState.players)
+            gameState = try UnoEngine.startGame(players: gameState.players, variant: variant)
             send(.gameState(gameState))
         } catch {
             send(.error(error.localizedDescription))
@@ -74,10 +100,24 @@ final class MultipeerGameSession: NSObject, GameSession {
 
     func sendPlayCard(cardID: UUID, chosenColor: CardColor?) {
         send(.playCard(cardID: cardID, chosenColor: chosenColor))
+        if hostMode {
+            handlePlayCard(cardID: cardID, chosenColor: chosenColor, playerID: localPlayerID)
+        }
     }
 
     func sendDrawCard() {
         send(.drawCard)
+        if hostMode {
+            handleDrawCard(playerID: localPlayerID)
+        }
+    }
+
+    func handleTurnTimeout() {
+        send(.turnTimeout(playerID: localPlayerID))
+        if hostMode, let current = gameState.currentPlayer {
+            try? UnoEngine.handleTurnTimeout(for: current.id, in: &gameState, variant: variant)
+            publishState()
+        }
     }
 
     func disconnect() {
@@ -88,17 +128,37 @@ final class MultipeerGameSession: NSObject, GameSession {
         browser = nil
         session = nil
         connectedPeers.removeAll()
+        hostMode = false
         connectionState = .disconnected
         delegate?.session(self, didChange: .disconnected)
     }
 
     private func broadcastLobby() {
-        send(.lobbyUpdate(players: gameState.players))
+        let message = GameMessage.lobbyUpdate(players: gameState.players, variantID: gameState.variantID)
+        send(message)
+        delegate?.session(self, didReceive: message)
+    }
+
+    private func publishState() {
+        delegate?.session(self, didReceive: .gameState(gameState))
+        if hostMode {
+            send(.gameState(gameState))
+        }
     }
 
     private func send(_ message: GameMessage) {
-        guard let session, !session.connectedPeers.isEmpty || isHost else {
-            if case .lobbyUpdate = message {
+        guard let session else { return }
+
+        let peers = session.connectedPeers
+        let shouldSendLocally: Bool = {
+            switch message {
+            case .lobbyUpdate, .gameState, .error: return true
+            default: return false
+            }
+        }()
+
+        if peers.isEmpty {
+            if shouldSendLocally {
                 delegate?.session(self, didReceive: message)
             }
             return
@@ -106,7 +166,7 @@ final class MultipeerGameSession: NSObject, GameSession {
 
         do {
             let data = try JSONEncoder().encode(message)
-            try session.send(data, toPeers: session.connectedPeers, with: .reliable)
+            try session.send(data, toPeers: peers, with: .reliable)
         } catch {
             delegate?.session(self, didReceive: .error(error.localizedDescription))
         }
@@ -115,65 +175,101 @@ final class MultipeerGameSession: NSObject, GameSession {
     private func handle(_ message: GameMessage, from peer: MCPeerID?) {
         switch message {
         case let .joinLobby(playerName):
-            guard isHost, let peer else { return }
+            guard hostMode, let peer else { return }
             let player = Player(displayName: playerName)
             connectedPeers[peer] = player.id
             gameState.players.append(player)
             broadcastLobby()
 
-        case .lobbyUpdate:
+        case let .lobbyUpdate(players, variantID):
+            gameState.players = players
+            gameState.variantID = variantID
             delegate?.session(self, didReceive: message)
 
-        case .startGame:
-            break
+        case let .selectVariant(variantID):
+            gameState.variantID = variantID
+            delegate?.session(self, didReceive: message)
+
+        case .enterRulesPhase:
+            gameState.phase = .rulesReady
+            gameState.readyDeadline = Date().addingTimeInterval(TimeInterval(variant.deck.readyTimeLimit))
+            delegate?.session(self, didReceive: message)
+            publishState()
+
+        case let .setReady(playerID):
+            guard hostMode else { return }
+            applyReady(playerID)
 
         case let .gameState(state):
             gameState = state
             delegate?.session(self, didReceive: message)
 
         case let .playCard(cardID, chosenColor):
-            guard isHost else { return }
-            handlePlayCard(cardID: cardID, chosenColor: chosenColor, from: peer)
+            guard hostMode else { return }
+            let playerID = playerID(for: peer) ?? localPlayerID
+            handlePlayCard(cardID: cardID, chosenColor: chosenColor, playerID: playerID)
 
         case .drawCard:
-            guard isHost else { return }
-            handleDrawCard(from: peer)
+            guard hostMode else { return }
+            let playerID = playerID(for: peer) ?? localPlayerID
+            handleDrawCard(playerID: playerID)
+
+        case let .turnTimeout(playerID):
+            guard hostMode else { return }
+            try? UnoEngine.handleTurnTimeout(for: playerID, in: &gameState, variant: variant)
+            publishState()
 
         case let .playerDisconnected(playerID):
             gameState.players.removeAll { $0.id == playerID }
             delegate?.session(self, didReceive: message)
 
-        case .error:
+        case .error, .startGame:
             delegate?.session(self, didReceive: message)
         }
     }
 
-    private func handlePlayCard(cardID: UUID, chosenColor: CardColor?, from peer: MCPeerID?) {
-        guard let peer, let playerID = connectedPeers[peer] ?? (peer == peerID ? localPlayerID : nil),
-              let playerIndex = gameState.players.firstIndex(where: { $0.id == playerID }),
+    private func applyReady(_ playerID: UUID) {
+        guard let index = gameState.players.firstIndex(where: { $0.id == playerID }) else { return }
+        gameState.players[index].isReady = true
+        publishState()
+
+        let readyCount = gameState.players.filter(\.isReady).count
+        let timedOut = gameState.readyDeadline.map { Date() >= $0 } ?? false
+
+        if gameState.allPlayersReady || (timedOut && readyCount >= UnoEngine.minPlayers) {
+            startGame(variant: variant)
+        }
+    }
+
+    private func handlePlayCard(cardID: UUID, chosenColor: CardColor?, playerID: UUID) {
+        guard let playerIndex = gameState.players.firstIndex(where: { $0.id == playerID }),
               let card = gameState.players[playerIndex].hand.first(where: { $0.id == cardID }) else { return }
 
         do {
-            try UnoEngine.play(card: card, chosenColor: chosenColor, from: playerID, in: &gameState)
-            send(.gameState(gameState))
+            try UnoEngine.play(card: card, chosenColor: chosenColor, from: playerID, in: &gameState, variant: variant)
+            publishState()
         } catch {
             send(.error(error.localizedDescription))
         }
     }
 
-    private func handleDrawCard(from peer: MCPeerID?) {
-        guard let peer, let playerID = connectedPeers[peer] ?? (peer == peerID ? localPlayerID : nil) else { return }
-
+    private func handleDrawCard(playerID: UUID) {
         do {
             if gameState.pendingDrawCount > 0 {
-                try UnoEngine.drawPendingCards(for: playerID, in: &gameState)
+                try UnoEngine.drawPendingCards(for: playerID, in: &gameState, variant: variant)
             } else {
-                _ = try UnoEngine.drawCard(for: playerID, in: &gameState)
+                _ = try UnoEngine.drawCard(for: playerID, in: &gameState, variant: variant)
             }
-            send(.gameState(gameState))
+            publishState()
         } catch {
             send(.error(error.localizedDescription))
         }
+    }
+
+    private func playerID(for peer: MCPeerID?) -> UUID? {
+        guard let peer else { return nil }
+        if peer == peerID { return localPlayerID }
+        return connectedPeers[peer]
     }
 }
 
@@ -181,17 +277,19 @@ extension MultipeerGameSession: MCSessionDelegate {
     func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
         switch state {
         case .connected:
-            if !isHost {
+            if !hostMode {
                 connectionState = .connected
                 delegate?.session(self, didChange: .connected)
                 send(.joinLobby(playerName: localPlayerName))
+            } else {
+                broadcastLobby()
             }
         case .notConnected:
             if let playerID = connectedPeers[peerID] {
                 gameState.players.removeAll { $0.id == playerID }
                 connectedPeers.removeValue(forKey: peerID)
                 delegate?.session(self, didReceive: .playerDisconnected(playerID: playerID))
-                if isHost { broadcastLobby() }
+                if hostMode { broadcastLobby() }
             }
         default:
             break
@@ -216,10 +314,9 @@ extension MultipeerGameSession: MCNearbyServiceAdvertiserDelegate {
 
 extension MultipeerGameSession: MCNearbyServiceBrowserDelegate {
     func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String: String]?) {
-        browser.invitePeer(peerID, to: session!, withContext: nil, timeout: 15)
+        guard let session else { return }
+        browser.invitePeer(peerID, to: session, withContext: nil, timeout: 15)
     }
 
     func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {}
 }
-
-import UIKit
