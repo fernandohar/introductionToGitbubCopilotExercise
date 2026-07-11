@@ -1,56 +1,57 @@
 # Game Catalog — Developer Guide
 
-This folder defines the card games that **Card Cabana** loads and displays.
+Games are split into two groups:
 
-## How it works
+| Source | Shipped with app? | Examples |
+|--------|-------------------|----------|
+| `bundled` | Yes | Big Two, Blackjack |
+| `downloadable` | No — fetched online | UNO Classic, The Simpsons UNO |
 
-1. The app ships with a bundled copy at `UnoMultiplayer/Resources/GameCatalog/catalog.json`
-2. Players tap **Settings → Get Latest Games** to fetch updates from GitHub
-3. Each game entry specifies its **engine**, **rules**, and **theme**
+Players download extra games via **Settings → Get Latest Games** or the ↓ button on the game picker.
 
-## Adding a new game
-
-Edit `catalog.json` and add an entry to the `games` array:
+## Adding a shedding game (UNO-style)
 
 ```json
 {
-  "id": "my-game",
-  "name": "My Card Game",
-  "tagline": "Short description for the picker",
-  "icon": "🎴",
-  "accentColor": "#2A9D8F",
-  "rules": "Full rules shown before the game.\n\nUse \\n for line breaks.",
-  "engineType": "bigTwo",
-  "settings": {
-    "minPlayers": 2,
-    "maxPlayers": 4,
-    "turnTimeLimit": 30,
-    "readyTimeLimit": 300
+  "id": "uno-simpsons",
+  "name": "The Simpsons UNO",
+  "source": "downloadable",
+  "engineType": "shedding",
+  "sheddingDeck": {
+    "startingHandSize": 7,
+    "includeSkip": true,
+    "includeReverse": true,
+    "includeDrawTwo": true,
+    "includeWild": true,
+    "includeWildDrawFour": true
   },
-  "theme": {
-    "hearts": "#E63946",
-    "diamonds": "#E63946",
-    "clubs": "#1D3557",
-    "spades": "#1D3557",
-    "cardBack": "#4A6FA5",
-    "tableFelt": "#8FBC8F"
+  "sheddingTheme": {
+    "red": { "color": "#FF6B35", "pattern": "diamonds" },
+    "blue": { "color": "#4A90D9", "pattern": "dots" },
+    "green": { "color": "#5CB85C", "pattern": "checkered" },
+    "yellow": { "color": "#FFD90F", "pattern": "stripes" },
+    "wild": { "color": "#1A1A1A", "pattern": "characters" },
+    "cardBack": "#FFD90F",
+    "faces": {
+      "blue-skip": { "name": "Homer", "emoji": "🏃" },
+      "wild-wild": { "name": "Homer", "emoji": "🍩" }
+    }
   }
 }
 ```
 
-### Engine types
+### Pattern types
 
-| `engineType` | Games |
-|--------------|-------|
-| `bigTwo` | Big Two (Cho Dai Di), climbing card games |
-| `blackjack` | Blackjack (21) |
+`dots`, `checkered`, `stripes`, `diamonds`, `characters`, `solid`
 
-New engines can be added in `UnoMultiplayer/Game/` and registered in `GameEngineRouter.swift`.
+### Character faces
 
-## Publishing updates
+Key format: `{colour}-{value}` e.g. `red-eight`, `wild-wildDrawFour`
 
-1. Commit changes to `GameCatalog/catalog.json`
-2. Push to GitHub
-3. Players open **Settings → Get Latest Games**
+Use emoji + name for themed card faces (no copyrighted images required).
 
-No App Store update required for new game definitions.
+## Publishing
+
+1. Edit `GameCatalog/catalog.json` (online catalog — includes downloadable games)
+2. Keep `UnoMultiplayer/Resources/GameCatalog/catalog.json` as bundled-only
+3. Push to GitHub — players tap **Get Latest Games**

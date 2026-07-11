@@ -14,6 +14,8 @@ final class AppViewModel: ObservableObject, GameSessionDelegate {
     @Published var players: [Player] = []
     @Published var gameState: GameState?
     @Published var errorMessage: String?
+    @Published var selectedSheddingCard: SheddingCard?
+    @Published var showSheddingColorPicker = false
 
     @Published var playerName: String {
         didSet { UserDefaults.standard.set(playerName, forKey: "playerName") }
@@ -117,6 +119,19 @@ final class AppViewModel: ObservableObject, GameSessionDelegate {
         session.sendPlayCard(cardID: card.id)
     }
 
+    func playSheddingCard(_ card: SheddingCard, color: SheddingColor? = nil) {
+        if card.isWild && color == nil {
+            selectedSheddingCard = card
+            showSheddingColorPicker = true
+            return
+        }
+        session.sendPlayCard(cardID: card.id, chosenSheddingColor: color)
+        selectedSheddingCard = nil
+        showSheddingColorPicker = false
+    }
+
+    func drawCard() { session.sendDrawCard() }
+
     func pass() { session.sendPass() }
     func hit() { session.sendHit() }
     func stand() { session.sendStand() }
@@ -128,8 +143,19 @@ final class AppViewModel: ObservableObject, GameSessionDelegate {
         return GameEngineRouter.playableCards(in: hand, for: state, variant: game)
     }
 
+    func playableSheddingCards() -> [SheddingCard] {
+        guard let hand = localPlayer?.sheddingHand,
+              let state = gameState,
+              let game = activeGame else { return [] }
+        return GameEngineRouter.playableSheddingCards(in: hand, for: state, variant: game)
+    }
+
     func canPass() -> Bool {
         playableCards().isEmpty && gameState?.topCard != nil
+    }
+
+    var hasOneCardLeft: Bool {
+        localPlayer?.cardCount == 1
     }
 
     // MARK: - Session delegate

@@ -8,7 +8,8 @@ enum GameMessage: Codable {
     case setReady(playerID: UUID)
     case startGame
     case gameState(GameState)
-    case playCard(cardID: UUID)
+    case playCard(cardID: UUID, chosenSheddingColor: SheddingColor?)
+    case drawCard
     case pass
     case hit
     case stand
@@ -41,7 +42,8 @@ protocol GameSession: AnyObject {
     func enterRulesPhase()
     func setReady()
     func startGame(variant: GameVariant)
-    func sendPlayCard(cardID: UUID)
+    func sendPlayCard(cardID: UUID, chosenSheddingColor: SheddingColor? = nil)
+    func sendDrawCard()
     func sendPass()
     func sendHit()
     func sendStand()

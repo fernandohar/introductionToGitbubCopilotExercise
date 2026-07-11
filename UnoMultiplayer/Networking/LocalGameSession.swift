@@ -82,12 +82,30 @@ final class LocalGameSession: GameSession {
         }
     }
 
-    func sendPlayCard(cardID: UUID) {
-        guard let playerIndex = gameState.players.firstIndex(where: { $0.id == localPlayerID }),
-              let card = gameState.players[playerIndex].hand.first(where: { $0.id == cardID }) else { return }
-
+    func sendPlayCard(cardID: UUID, chosenSheddingColor: SheddingColor? = nil) {
         do {
-            try GameEngineRouter.play(card: card, from: localPlayerID, in: &gameState, variant: variant)
+            switch variant.engineType {
+            case .shedding:
+                guard let playerIndex = gameState.players.firstIndex(where: { $0.id == localPlayerID }),
+                      let card = gameState.players[playerIndex].sheddingHand.first(where: { $0.id == cardID }) else { return }
+                try GameEngineRouter.playShedding(card: card, chosenColor: chosenSheddingColor, from: localPlayerID, in: &gameState, variant: variant)
+            case .bigTwo:
+                guard let playerIndex = gameState.players.firstIndex(where: { $0.id == localPlayerID }),
+                      let card = gameState.players[playerIndex].hand.first(where: { $0.id == cardID }) else { return }
+                try GameEngineRouter.play(card: card, from: localPlayerID, in: &gameState, variant: variant)
+            case .blackjack:
+                return
+            }
+            publishState()
+            scheduleNPCTurnIfNeeded()
+        } catch {
+            delegate?.session(self, didReceive: .error(error.localizedDescription))
+        }
+    }
+
+    func sendDrawCard() {
+        do {
+            try GameEngineRouter.drawShedding(for: localPlayerID, in: &gameState, variant: variant)
             publishState()
             scheduleNPCTurnIfNeeded()
         } catch {
@@ -188,6 +206,15 @@ final class LocalGameSession: GameSession {
                 try? GameEngineRouter.hit(from: current.id, in: &gameState, variant: variant)
             } else {
                 try? GameEngineRouter.stand(from: current.id, in: &gameState, variant: variant)
+            }
+        case .shedding:
+            let move = NPCPlayer.chooseSheddingMove(for: current, in: gameState, variant: variant, difficulty: difficulty)
+            if let card = move.card {
+                try? GameEngineRouter.playShedding(card: card, chosenColor: move.color, from: current.id, in: &gameState, variant: variant)
+            } else if gameState.pendingDrawCount > 0 {
+                try? SheddingEngine.drawPending(for: current.id, in: &gameState, variant: variant)
+            } else {
+                try? GameEngineRouter.drawShedding(for: current.id, in: &gameState, variant: variant)
             }
         }
 

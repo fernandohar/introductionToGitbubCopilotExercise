@@ -7,22 +7,11 @@
       "tagline": "Cho Dai Di — Hong Kong classic",
       "icon": "🀄",
       "accentColor": "#E63946",
+      "source": "bundled",
       "rules": "Big Two (Cho Dai Di / Dai Di) is a climbing card game from Hong Kong.\n\n• Standard 52-card deck; 3♦ lowest, 2 highest\n• Suit order: ♦ < ♣ < ♥ < ♠\n• 2–4 players; all cards dealt evenly\n• Holder of 3♦ leads the first trick\n• Play a higher single card or pass\n• First to empty their hand wins",
       "engineType": "bigTwo",
-      "settings": {
-        "minPlayers": 2,
-        "maxPlayers": 4,
-        "turnTimeLimit": 30,
-        "readyTimeLimit": 300
-      },
-      "theme": {
-        "hearts": "#E63946",
-        "diamonds": "#E63946",
-        "clubs": "#1D3557",
-        "spades": "#1D3557",
-        "cardBack": "#4A6FA5",
-        "tableFelt": "#8FBC8F"
-      }
+      "settings": { "minPlayers": 2, "maxPlayers": 4, "turnTimeLimit": 30, "readyTimeLimit": 300 },
+      "theme": { "hearts": "#E63946", "diamonds": "#E63946", "clubs": "#1D3557", "spades": "#1D3557", "cardBack": "#4A6FA5", "tableFelt": "#8FBC8F" }
     },
     {
       "id": "blackjack",
@@ -30,22 +19,11 @@
       "tagline": "Classic 21 — beat the dealer",
       "icon": "🂡",
       "accentColor": "#2A9D8F",
-      "rules": "Blackjack (21) — get closer to 21 than the dealer without going over.\n\n• Number cards = face value\n• Face cards = 10\n• Aces = 1 or 11\n• You and dealer each get 2 cards\n• Hit to draw, Stand to hold\n• Dealer hits until 17\n• Bust if you go over 21",
+      "source": "bundled",
+      "rules": "Blackjack (21) — get closer to 21 than the dealer without going over.\n\n• Number cards = face value\n• Face cards = 10\n• Aces = 1 or 11\n• Hit to draw, Stand to hold\n• Dealer hits until 17",
       "engineType": "blackjack",
-      "settings": {
-        "minPlayers": 1,
-        "maxPlayers": 1,
-        "turnTimeLimit": 30,
-        "readyTimeLimit": 300
-      },
-      "theme": {
-        "hearts": "#E63946",
-        "diamonds": "#E63946",
-        "clubs": "#1D3557",
-        "spades": "#1D3557",
-        "cardBack": "#4A6FA5",
-        "tableFelt": "#8FBC8F"
-      }
+      "settings": { "minPlayers": 1, "maxPlayers": 1, "turnTimeLimit": 30, "readyTimeLimit": 300 },
+      "theme": { "hearts": "#E63946", "diamonds": "#E63946", "clubs": "#1D3557", "spades": "#1D3557", "cardBack": "#4A6FA5", "tableFelt": "#8FBC8F" }
     }
   ]
 }

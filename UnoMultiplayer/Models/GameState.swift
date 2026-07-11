@@ -20,6 +20,9 @@ struct GameState: Codable {
     var drawPile: [PlayingCard]
     var tableCards: [PlayingCard]
     var dealerHand: [PlayingCard]
+    var sheddingDrawPile: [SheddingCard]
+    var sheddingTable: [SheddingCard]
+    var activeSheddingColor: SheddingColor?
     var pendingDrawCount: Int
     var winnerID: UUID?
     var gameID: String?
@@ -44,6 +47,7 @@ struct GameState: Codable {
     }
 
     var topCard: PlayingCard? { tableCards.last }
+    var topSheddingCard: SheddingCard? { sheddingTable.last }
 
     var allPlayersReady: Bool {
         !players.isEmpty && players.allSatisfy(\.isReady)
@@ -67,6 +71,9 @@ struct GameState: Codable {
         drawPile: [PlayingCard] = [],
         tableCards: [PlayingCard] = [],
         dealerHand: [PlayingCard] = [],
+        sheddingDrawPile: [SheddingCard] = [],
+        sheddingTable: [SheddingCard] = [],
+        activeSheddingColor: SheddingColor? = nil,
         pendingDrawCount: Int = 0,
         winnerID: UUID? = nil,
         gameID: String? = nil,
@@ -85,6 +92,9 @@ struct GameState: Codable {
         self.drawPile = drawPile
         self.tableCards = tableCards
         self.dealerHand = dealerHand
+        self.sheddingDrawPile = sheddingDrawPile
+        self.sheddingTable = sheddingTable
+        self.activeSheddingColor = activeSheddingColor
         self.pendingDrawCount = pendingDrawCount
         self.winnerID = winnerID
         self.gameID = gameID

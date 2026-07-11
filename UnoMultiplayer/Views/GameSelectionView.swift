@@ -18,13 +18,20 @@ struct GameSelectionView: View {
                 .font(.subheadline)
                 .foregroundStyle(AppTheme.textSecondary)
 
+            if !app.catalogService.hasDownloadableGames {
+                downloadBanner
+            }
+
             ScrollView {
-                LazyVGrid(columns: columns, spacing: 16) {
-                    ForEach(app.catalogService.games) { game in
-                        gameCard(game)
-                    }
+                if !app.catalogService.bundledOnlyGames.isEmpty {
+                    sectionHeader("Included")
+                    gameGrid(app.catalogService.bundledOnlyGames)
                 }
-                .padding(.horizontal)
+
+                if app.catalogService.hasDownloadableGames {
+                    sectionHeader("Downloaded")
+                    gameGrid(app.catalogService.downloadableGames)
+                }
             }
 
             Button("Continue") {
@@ -43,7 +50,56 @@ struct GameSelectionView: View {
             ToolbarItem(placement: .topBarLeading) {
                 Button("Back") { app.goHome() }
             }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    Task { await app.catalogService.fetchLatestGames() }
+                } label: {
+                    if app.catalogService.isLoading {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "arrow.down.circle")
+                    }
+                }
+            }
         }
+    }
+
+    private var downloadBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "cloud.fill")
+                .foregroundStyle(AppTheme.primary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("More games available online")
+                    .font(.caption.bold())
+                Text("Tap ↓ to download UNO & themed decks")
+                    .font(.caption2)
+                    .foregroundStyle(AppTheme.textSecondary)
+            }
+            Spacer()
+        }
+        .padding()
+        .background(AppTheme.surfaceMuted, in: RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal)
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        HStack {
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(AppTheme.textPrimary)
+            Spacer()
+        }
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+
+    private func gameGrid(_ games: [GameVariant]) -> some View {
+        LazyVGrid(columns: columns, spacing: 16) {
+            ForEach(games) { game in
+                gameCard(game)
+            }
+        }
+        .padding(.horizontal)
     }
 
     private func gameCard(_ game: GameVariant) -> some View {
@@ -51,7 +107,15 @@ struct GameSelectionView: View {
 
         return Button { selectedID = game.id } label: {
             VStack(alignment: .leading, spacing: 8) {
-                Text(game.icon).font(.system(size: 36))
+                HStack {
+                    Text(game.icon).font(.system(size: 36))
+                    Spacer()
+                    if game.isDownloadable {
+                        Image(systemName: "cloud.fill")
+                            .font(.caption)
+                            .foregroundStyle(AppTheme.primary)
+                    }
+                }
                 Text(game.name).font(.subheadline.bold()).foregroundStyle(AppTheme.textPrimary).lineLimit(2)
                 Text(game.tagline).font(.caption2).foregroundStyle(AppTheme.textSecondary).lineLimit(2)
             }

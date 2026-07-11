@@ -26,14 +26,19 @@ final class GameCatalogService: ObservableObject {
     }
 
     private let cacheURL: URL
+    private var bundledGames: [GameVariant] = []
 
     var variants: [GameVariant] { games }
+    var downloadableGames: [GameVariant] { games.filter(\.isDownloadable) }
+    var bundledOnlyGames: [GameVariant] { games.filter { $0.source == .bundled } }
+    var hasDownloadableGames: Bool { !downloadableGames.isEmpty }
 
     init() {
         remoteCatalogURL = UserDefaults.standard.string(forKey: "remoteCatalogURL") ?? Self.defaultRemoteURL
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
         cacheURL = caches.appendingPathComponent("game-catalog.json")
         loadBundledCatalog()
+        loadCachedCatalogIfAvailable()
     }
 
     func game(id: String) -> GameVariant? {
@@ -46,9 +51,18 @@ final class GameCatalogService: ObservableObject {
         guard let url = Bundle.main.url(forResource: "catalog", withExtension: "json", subdirectory: "GameCatalog"),
               let data = try? Data(contentsOf: url),
               let catalog = try? JSONDecoder().decode(GameCatalog.self, from: data) else {
-            games = [GameVariant.bigTwo]
+            bundledGames = [GameVariant.bigTwo]
+            games = bundledGames
             return
         }
+        bundledGames = catalog.games
+        games = catalog.games
+    }
+
+    func loadCachedCatalogIfAvailable() {
+        guard let data = try? Data(contentsOf: cacheURL),
+              let catalog = try? JSONDecoder().decode(GameCatalog.self, from: data),
+              !catalog.games.isEmpty else { return }
         games = catalog.games
     }
 
@@ -77,6 +91,7 @@ final class GameCatalogService: ObservableObject {
                 games = catalog.games
                 lastError = "Using cached games. \(error.localizedDescription)"
             } else {
+                games = bundledGames
                 lastError = error.localizedDescription
             }
         }

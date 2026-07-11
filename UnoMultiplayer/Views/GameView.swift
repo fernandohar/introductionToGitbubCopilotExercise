@@ -13,6 +13,14 @@ struct GameView: View {
             actionBar
         }
         .vacationBackground()
+        .sheet(isPresented: $app.showSheddingColorPicker) {
+            SheddingColorPickerSheet { color in
+                if let card = app.selectedSheddingCard {
+                    app.playSheddingCard(card, color: color)
+                }
+            }
+            .presentationDetents([.medium])
+        }
         .alert("Game Over!", isPresented: .constant(app.gameState?.phase == .finished)) {
             Button("Home") { app.goHome() }
         } message: {
@@ -96,11 +104,17 @@ struct GameView: View {
                 HStack(spacing: 28) {
                     if app.activeGame?.engineType == .blackjack {
                         dealerArea
+                    } else if app.activeGame?.engineType == .shedding,
+                              let count = app.gameState?.sheddingDrawPile.count, count > 0 {
+                        sheddingDrawPileView(count: count)
                     } else if let drawCount = app.gameState?.drawPile.count, drawCount > 0 {
                         drawPileView(count: drawCount)
                     }
 
-                    if let top = app.gameState?.topCard {
+                    if app.activeGame?.engineType == .shedding, let top = app.gameState?.topSheddingCard {
+                        SheddingCardView(card: top, theme: app.activeGame?.sheddingTheme)
+                            .scaleEffect(1.15)
+                    } else if let top = app.gameState?.topCard {
                         PlayingCardView(card: top, theme: app.activeGame?.theme)
                             .scaleEffect(1.15)
                     } else {
@@ -108,6 +122,20 @@ struct GameView: View {
                             .strokeBorder(.white.opacity(0.4), style: StrokeStyle(lineWidth: 2, dash: [6]))
                             .frame(width: 56, height: 80)
                     }
+                }
+
+                if app.activeGame?.engineType == .shedding,
+                   let activeColor = app.gameState?.activeSheddingColor,
+                   app.gameState?.topSheddingCard?.isWild == true {
+                    Text("Colour: \(activeColor.displayName)")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.9))
+                }
+
+                if let pending = app.gameState?.pendingDrawCount, pending > 0 {
+                    Text("Draw stack: +\(pending)")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white)
                 }
 
                 if let current = app.gameState?.currentPlayer {
@@ -171,6 +199,21 @@ struct GameView: View {
         }
     }
 
+    private func sheddingDrawPileView(count: Int) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color(hex: app.activeGame?.sheddingTheme?.cardBack ?? "#4A6FA5"))
+                .frame(width: 56, height: 80)
+            VStack {
+                Image(systemName: "rectangle.stack.fill")
+                    .foregroundStyle(.white)
+                Text("\(count)")
+                    .font(.caption2.bold())
+                    .foregroundStyle(.white)
+            }
+        }
+    }
+
     private var handArea: some View {
         VStack(spacing: 8) {
             if let status = app.gameState?.blackjackStatus {
@@ -183,27 +226,57 @@ struct GameView: View {
                 .font(.caption.bold())
                 .foregroundStyle(AppTheme.textSecondary)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: -10) {
-                    ForEach(app.localPlayer?.hand ?? []) { card in
-                        let isPlayable = app.playableCards().contains(card)
-                        PlayingCardView(
-                            card: card,
-                            isPlayable: isPlayable && app.isMyTurn,
-                            theme: app.activeGame?.theme
-                        )
-                        .onTapGesture {
-                            guard app.isMyTurn, isPlayable else { return }
-                            app.playCard(card)
-                        }
-                        .opacity(isPlayable && app.isMyTurn ? 1 : 0.5)
-                    }
-                }
-                .padding(.horizontal, 20)
+            if app.activeGame?.engineType == .shedding {
+                sheddingHandView
+            } else {
+                standardHandView
             }
-            .frame(height: 100)
         }
         .padding(.bottom, 4)
+    }
+
+    private var sheddingHandView: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: -10) {
+                ForEach(app.localPlayer?.sheddingHand ?? []) { card in
+                    let isPlayable = app.playableSheddingCards().contains(card)
+                    SheddingCardView(
+                        card: card,
+                        theme: app.activeGame?.sheddingTheme,
+                        isPlayable: isPlayable && app.isMyTurn
+                    )
+                    .onTapGesture {
+                        guard app.isMyTurn, isPlayable else { return }
+                        app.playSheddingCard(card)
+                    }
+                    .opacity(isPlayable && app.isMyTurn ? 1 : 0.5)
+                }
+            }
+            .padding(.horizontal, 20)
+        }
+        .frame(height: 100)
+    }
+
+    private var standardHandView: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: -10) {
+                ForEach(app.localPlayer?.hand ?? []) { card in
+                    let isPlayable = app.playableCards().contains(card)
+                    PlayingCardView(
+                        card: card,
+                        isPlayable: isPlayable && app.isMyTurn,
+                        theme: app.activeGame?.theme
+                    )
+                    .onTapGesture {
+                        guard app.isMyTurn, isPlayable else { return }
+                        app.playCard(card)
+                    }
+                    .opacity(isPlayable && app.isMyTurn ? 1 : 0.5)
+                }
+            }
+            .padding(.horizontal, 20)
+        }
+        .frame(height: 100)
     }
 
     private var actionBar: some View {
@@ -220,6 +293,14 @@ struct GameView: View {
                     if app.canPass() {
                         Button("Pass") { app.pass() }
                             .buttonStyle(.bordered)
+                    }
+                case .shedding:
+                    Button("Draw") { app.drawCard() }
+                        .buttonStyle(.bordered)
+                    if app.hasOneCardLeft {
+                        Text("One left!")
+                            .font(.caption.bold())
+                            .foregroundStyle(AppTheme.accent)
                     }
                 default:
                     EmptyView()

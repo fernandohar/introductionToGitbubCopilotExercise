@@ -4,6 +4,7 @@ import SwiftUI
 enum GameEngineType: String, Codable, CaseIterable {
     case bigTwo
     case blackjack
+    case shedding
 }
 
 struct GameSettings: Codable, Hashable {
@@ -42,8 +43,18 @@ struct GameVariant: Identifiable, Codable, Hashable {
     var engineType: GameEngineType
     var settings: GameSettings
     var theme: CardTheme
+    var source: GameSource?
+    var sheddingDeck: SheddingDeckConfig?
+    var sheddingTheme: SheddingTheme?
 
     var accentSwiftUIColor: Color { Color(hex: accentColor) }
+    var isDownloadable: Bool { source == .downloadable }
+}
+
+enum GameSource: String, Codable {
+    case bundled
+    case downloadable
+}
 
     static let bigTwo = GameVariant(
         id: "big-two",
@@ -63,7 +74,8 @@ struct GameVariant: Identifiable, Codable, Hashable {
         """,
         engineType: .bigTwo,
         settings: GameSettings(minPlayers: 2, maxPlayers: 4, turnTimeLimit: 30, readyTimeLimit: 300),
-        theme: CardTheme()
+        theme: CardTheme(),
+        source: .bundled
     )
 }
 

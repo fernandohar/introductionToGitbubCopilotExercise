@@ -96,9 +96,14 @@ final class MultipeerGameSession: NSObject, GameSession {
         }
     }
 
-    func sendPlayCard(cardID: UUID) {
-        send(.playCard(cardID: cardID))
-        if hostMode { handlePlayCard(cardID: cardID, playerID: localPlayerID) }
+    func sendPlayCard(cardID: UUID, chosenSheddingColor: SheddingColor? = nil) {
+        send(.playCard(cardID: cardID, chosenSheddingColor: chosenSheddingColor))
+        if hostMode { handlePlayCard(cardID: cardID, chosenSheddingColor: chosenSheddingColor, playerID: localPlayerID) }
+    }
+
+    func sendDrawCard() {
+        send(.drawCard)
+        if hostMode { handleDrawCard(playerID: localPlayerID) }
     }
 
     func sendPass() {
@@ -204,9 +209,13 @@ final class MultipeerGameSession: NSObject, GameSession {
             gameState = state
             delegate?.session(self, didReceive: message)
 
-        case let .playCard(cardID):
+        case let .playCard(cardID, chosenSheddingColor):
             guard hostMode else { return }
-            handlePlayCard(cardID: cardID, playerID: playerID(for: peer) ?? localPlayerID)
+            handlePlayCard(cardID: cardID, chosenSheddingColor: chosenSheddingColor, playerID: playerID(for: peer) ?? localPlayerID)
+
+        case .drawCard:
+            guard hostMode else { return }
+            handleDrawCard(playerID: playerID(for: peer) ?? localPlayerID)
 
         case .pass:
             guard hostMode else { return }
@@ -247,11 +256,29 @@ final class MultipeerGameSession: NSObject, GameSession {
         }
     }
 
-    private func handlePlayCard(cardID: UUID, playerID: UUID) {
-        guard let playerIndex = gameState.players.firstIndex(where: { $0.id == playerID }),
-              let card = gameState.players[playerIndex].hand.first(where: { $0.id == cardID }) else { return }
+    private func handlePlayCard(cardID: UUID, chosenSheddingColor: SheddingColor?, playerID: UUID) {
         do {
-            try GameEngineRouter.play(card: card, from: playerID, in: &gameState, variant: variant)
+            switch variant.engineType {
+            case .shedding:
+                guard let playerIndex = gameState.players.firstIndex(where: { $0.id == playerID }),
+                      let card = gameState.players[playerIndex].sheddingHand.first(where: { $0.id == cardID }) else { return }
+                try GameEngineRouter.playShedding(card: card, chosenColor: chosenSheddingColor, from: playerID, in: &gameState, variant: variant)
+            case .bigTwo:
+                guard let playerIndex = gameState.players.firstIndex(where: { $0.id == playerID }),
+                      let card = gameState.players[playerIndex].hand.first(where: { $0.id == cardID }) else { return }
+                try GameEngineRouter.play(card: card, from: playerID, in: &gameState, variant: variant)
+            case .blackjack:
+                return
+            }
+            publishState()
+        } catch {
+            send(.error(error.localizedDescription))
+        }
+    }
+
+    private func handleDrawCard(playerID: UUID) {
+        do {
+            try GameEngineRouter.drawShedding(for: playerID, in: &gameState, variant: variant)
             publishState()
         } catch {
             send(.error(error.localizedDescription))
