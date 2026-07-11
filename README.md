@@ -1,16 +1,40 @@
-# Getting Started with GitHub Copilot
+# Card Cabana (iOS)
 
-<img src="https://octodex.github.com/images/Professortocat_v2.png" align="right" height="200px" />
+A relaxed, vacation-themed card game platform for iOS. Play classic games like **Big Two** (Cho Dai Di) and **Blackjack** — solo against NPCs or with friends nearby via Bluetooth/Wi-Fi (no internet required).
 
-Hey @fernandohar!
+## Features
 
-Mona here. I'm done preparing your exercise. Hope you enjoy! 💚
+- **Game platform** — Not tied to any single branded card game; loads games from a JSON catalog
+- **Big Two** — Hong Kong classic (Cho Dai Di / Dai Di) with standard 52-card deck
+- **Blackjack** — Beat the dealer to 21
+- **Vacation UI** — Light sand & ocean palette, soft palm-green table
+- **Player seats** — NEXT badge on upcoming player, mini card-stack previews showing hand size
+- **Single player** — Local NPC opponents with Easy / Medium / Hard difficulty
+- **Multiplayer** — Create or join rooms offline (works on a plane)
+- **Developer catalog** — Add games via `GameCatalog/catalog.json` on GitHub
 
-Remember, it's self-paced so feel free to take a break! ☕️
+## Game flow
 
-[![](https://img.shields.io/badge/Go%20to%20Exercise-%E2%86%92-1f883d?style=for-the-badge&logo=github&labelColor=197935)](https://github.com/fernandohar/introductionToGitbubCopilotExercise/issues/1)
+```
+Card Cabana Home
+├── Single Player → Difficulty → Choose Game → Rules & 👌 Ready → Play
+└── Multiplayer
+    ├── Create Room → Choose Game → Lobby → Rules & Ready → Play
+    └── Join Room → Lobby → Rules & Ready → Play
+```
 
----
+## Setup
 
-&copy; 2025 GitHub &bull; [Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md) &bull; [MIT License](https://gh.io/mit)
+```bash
+brew install xcodegen
+xcodegen generate
+open UnoMultiplayer.xcodeproj
+```
 
+## Adding new games
+
+See [GameCatalog/README.md](GameCatalog/README.md).
+
+## License
+
+MIT License — see [LICENSE](LICENSE).

@@ -1,0 +1,88 @@
+{
+  "version": 3,
+  "games": [
+    {
+      "id": "big-two",
+      "name": "Big Two",
+      "tagline": "Cho Dai Di — Hong Kong classic",
+      "icon": "🀄",
+      "accentColor": "#E63946",
+      "source": "bundled",
+      "rules": "Big Two (Cho Dai Di / Dai Di) is a climbing card game from Hong Kong.\n\n• Standard 52-card deck; 3♦ lowest, 2 highest\n• 2–4 players; holder of 3♦ leads\n• Play a higher single card or pass\n• First to empty their hand wins",
+      "engineType": "bigTwo",
+      "settings": { "minPlayers": 2, "maxPlayers": 4, "turnTimeLimit": 30, "readyTimeLimit": 300 },
+      "theme": { "hearts": "#E63946", "diamonds": "#E63946", "clubs": "#1D3557", "spades": "#1D3557", "cardBack": "#4A6FA5", "tableFelt": "#8FBC8F" }
+    },
+    {
+      "id": "blackjack",
+      "name": "Blackjack",
+      "tagline": "Classic 21 — beat the dealer",
+      "icon": "🂡",
+      "accentColor": "#2A9D8F",
+      "source": "bundled",
+      "rules": "Blackjack (21) — get closer to 21 than the dealer without going over.",
+      "engineType": "blackjack",
+      "settings": { "minPlayers": 1, "maxPlayers": 1, "turnTimeLimit": 30, "readyTimeLimit": 300 },
+      "theme": { "hearts": "#E63946", "diamonds": "#E63946", "clubs": "#1D3557", "spades": "#1D3557", "cardBack": "#4A6FA5", "tableFelt": "#8FBC8F" }
+    },
+    {
+      "id": "uno-classic",
+      "name": "UNO Classic",
+      "tagline": "The original colour-matching card game",
+      "icon": "🃏",
+      "accentColor": "#E53935",
+      "source": "downloadable",
+      "rules": "Match cards by colour or number.\n\n• Skip — next player loses a turn\n• Reverse — reverses play direction\n• Draw Two (+2) — next player draws 2\n• Wild — choose the next colour\n• Wild Draw Four (+4) — choose colour, next player draws 4\n\nCall out when you have one card left! First to empty their hand wins.",
+      "engineType": "shedding",
+      "settings": { "minPlayers": 2, "maxPlayers": 10, "turnTimeLimit": 30, "readyTimeLimit": 300 },
+      "theme": { "hearts": "#E63946", "diamonds": "#E63946", "clubs": "#1D3557", "spades": "#1D3557", "cardBack": "#4A6FA5", "tableFelt": "#8FBC8F" },
+      "sheddingDeck": { "startingHandSize": 7, "includeSkip": true, "includeReverse": true, "includeDrawTwo": true, "includeWild": true, "includeWildDrawFour": true },
+      "sheddingTheme": {
+        "red": { "color": "#E53935", "pattern": "solid" },
+        "blue": { "color": "#1E88E5", "pattern": "solid" },
+        "green": { "color": "#43A047", "pattern": "solid" },
+        "yellow": { "color": "#FDD835", "pattern": "solid" },
+        "wild": { "color": "#8E24AA", "pattern": "solid" },
+        "cardBack": "#4A6FA5"
+      }
+    },
+    {
+      "id": "uno-simpsons",
+      "name": "The Simpsons UNO",
+      "tagline": "Springfield's favourite colour-matching game",
+      "icon": "🍩",
+      "accentColor": "#FFD90F",
+      "source": "downloadable",
+      "rules": "The Simpsons themed UNO — same classic rules with Springfield character cards.\n\n• Each colour has a unique card pattern\n• Character portraits on every card\n• Wild: Homer reaches for a pink donut\n• Wild +4: Ralph Wiggum and hot dogs\n• Skip Homer, Reverse Disco Stu, +2 Patty & Selma\n\nFirst to play all cards wins!",
+      "engineType": "shedding",
+      "settings": { "minPlayers": 2, "maxPlayers": 10, "turnTimeLimit": 30, "readyTimeLimit": 300 },
+      "theme": { "hearts": "#E63946", "diamonds": "#E63946", "clubs": "#1D3557", "spades": "#1D3557", "cardBack": "#FFD90F", "tableFelt": "#8FBC8F" },
+      "sheddingDeck": { "startingHandSize": 7, "includeSkip": true, "includeReverse": true, "includeDrawTwo": true, "includeWild": true, "includeWildDrawFour": true },
+      "sheddingTheme": {
+        "red": { "color": "#FF6B35", "pattern": "diamonds" },
+        "blue": { "color": "#4A90D9", "pattern": "dots" },
+        "green": { "color": "#5CB85C", "pattern": "checkered" },
+        "yellow": { "color": "#FFD90F", "pattern": "stripes" },
+        "wild": { "color": "#1A1A1A", "pattern": "characters" },
+        "cardBack": "#FFD90F",
+        "faces": {
+          "blue-zero": { "name": "Smithers", "emoji": "👔" },
+          "blue-one": { "name": "Homer", "emoji": "🍺" },
+          "blue-seven": { "name": "Flanders", "emoji": "⛪" },
+          "blue-skip": { "name": "Homer", "emoji": "🏃" },
+          "blue-reverse": { "name": "Disco Stu", "emoji": "🕺" },
+          "green-four": { "name": "Lisa", "emoji": "🎷" },
+          "green-five": { "name": "Maggie", "emoji": "👶" },
+          "green-nine": { "name": "Comic Book Guy", "emoji": "📚" },
+          "yellow-skip": { "name": "Homer", "emoji": "🏃" },
+          "yellow-drawTwo": { "name": "Patty & Selma", "emoji": "💨" },
+          "red-two": { "name": "Marge", "emoji": "💙" },
+          "red-six": { "name": "Santa's Little Helper", "emoji": "🐶" },
+          "red-eight": { "name": "Mr. Burns", "emoji": "💰" },
+          "wild-wild": { "name": "Homer", "emoji": "🍩" },
+          "wild-wildDrawFour": { "name": "Ralph", "emoji": "🌭" }
+        }
+      }
+    }
+  ]
+}
