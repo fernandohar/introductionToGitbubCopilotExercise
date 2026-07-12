@@ -42,7 +42,7 @@ final class GameCatalogService: ObservableObject {
     }
 
     func game(id: String) -> GameVariant? {
-        games.first { $0.id == id }
+        games.first { $0.id == id }.map(enrichGame)
     }
 
     func variant(id: String) -> GameVariant? { game(id: id) }
@@ -55,15 +55,15 @@ final class GameCatalogService: ObservableObject {
             games = bundledGames
             return
         }
-        bundledGames = catalog.games
-        games = catalog.games
+        bundledGames = catalog.games.map(enrichGame)
+        games = bundledGames
     }
 
     func loadCachedCatalogIfAvailable() {
         guard let data = try? Data(contentsOf: cacheURL),
               let catalog = try? JSONDecoder().decode(GameCatalog.self, from: data),
               !catalog.games.isEmpty else { return }
-        games = catalog.games
+        games = catalog.games.map(enrichGame)
     }
 
     func fetchLatestGames() async {
@@ -83,17 +83,33 @@ final class GameCatalogService: ObservableObject {
             }
             let catalog = try JSONDecoder().decode(GameCatalog.self, from: data)
             guard !catalog.games.isEmpty else { throw GameCatalogError.invalidCatalog }
-            games = catalog.games
+            games = catalog.games.map(enrichGame)
             try data.write(to: cacheURL, options: .atomic)
         } catch {
             if let cached = try? Data(contentsOf: cacheURL),
                let catalog = try? JSONDecoder().decode(GameCatalog.self, from: cached) {
-                games = catalog.games
+                games = catalog.games.map(enrichGame)
                 lastError = "Using cached games. \(error.localizedDescription)"
             } else {
                 games = bundledGames
                 lastError = error.localizedDescription
             }
         }
+    }
+
+    /// Merges bundled Springfield card art and full rules for The Simpsons UNO deck.
+    private func enrichGame(_ game: GameVariant) -> GameVariant {
+        guard game.id == "uno-simpsons" else { return game }
+        var enriched = game
+        enriched.rules = SimpsonsDeckFaces.rules
+        var theme = enriched.sheddingTheme ?? SimpsonsDeckFaces.theme
+        theme.deckStyle = "simpsons"
+        theme.cardBackEmoji = theme.cardBackEmoji ?? "🍩"
+        theme.cardBackLabel = theme.cardBackLabel ?? "Springfield"
+        if (theme.faces ?? [:]).count < SimpsonsDeckFaces.all.count {
+            theme.faces = SimpsonsDeckFaces.all
+        }
+        enriched.sheddingTheme = theme
+        return enriched
     }
 }

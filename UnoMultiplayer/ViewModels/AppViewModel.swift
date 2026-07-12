@@ -37,7 +37,9 @@ final class AppViewModel: ObservableObject, GameSessionDelegate {
     var isMyTurn: Bool { gameState?.currentPlayer?.id == session.localPlayerID }
 
     var activeGame: GameVariant? {
-        if let selectedGame { return selectedGame }
+        if let selectedGame {
+            return catalogService.game(id: selectedGame.id) ?? selectedGame
+        }
         if let id = gameState?.gameID { return catalogService.game(id: id) }
         return nil
     }

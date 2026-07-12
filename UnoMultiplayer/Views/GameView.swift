@@ -14,7 +14,7 @@ struct GameView: View {
         }
         .vacationBackground()
         .sheet(isPresented: $app.showSheddingColorPicker) {
-            SheddingColorPickerSheet { color in
+            SheddingColorPickerSheet(theme: app.activeGame?.sheddingTheme) { color in
                 if let card = app.selectedSheddingCard {
                     app.playSheddingCard(card, color: color)
                 }
@@ -201,16 +201,13 @@ struct GameView: View {
 
     private func sheddingDrawPileView(count: Int) -> some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color(hex: app.activeGame?.sheddingTheme?.cardBack ?? "#4A6FA5"))
-                .frame(width: 56, height: 80)
-            VStack {
-                Image(systemName: "rectangle.stack.fill")
-                    .foregroundStyle(.white)
-                Text("\(count)")
-                    .font(.caption2.bold())
-                    .foregroundStyle(.white)
-            }
+            SheddingCardBackView(theme: app.activeGame?.sheddingTheme)
+            Text("\(count)")
+                .font(.caption2.bold())
+                .foregroundStyle(.white)
+                .padding(4)
+                .background(AppTheme.accent, in: Circle())
+                .offset(x: 22, y: -34)
         }
     }
 

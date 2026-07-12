@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "games": [
     {
       "id": "big-two",
@@ -53,7 +53,7 @@
       "icon": "🍩",
       "accentColor": "#FFD90F",
       "source": "downloadable",
-      "rules": "The Simpsons themed UNO — same classic rules with Springfield character cards.\n\n• Each colour has a unique card pattern\n• Character portraits on every card\n• Wild: Homer reaches for a pink donut\n• Wild +4: Ralph Wiggum and hot dogs\n• Skip Homer, Reverse Disco Stu, +2 Patty & Selma\n\nFirst to play all cards wins!",
+      "rules": "See in-app rules for the complete Springfield rulebook.",
       "engineType": "shedding",
       "settings": { "minPlayers": 2, "maxPlayers": 10, "turnTimeLimit": 30, "readyTimeLimit": 300 },
       "theme": { "hearts": "#E63946", "diamonds": "#E63946", "clubs": "#1D3557", "spades": "#1D3557", "cardBack": "#FFD90F", "tableFelt": "#8FBC8F" },
@@ -65,23 +65,9 @@
         "yellow": { "color": "#FFD90F", "pattern": "stripes" },
         "wild": { "color": "#1A1A1A", "pattern": "characters" },
         "cardBack": "#FFD90F",
-        "faces": {
-          "blue-zero": { "name": "Smithers", "emoji": "👔" },
-          "blue-one": { "name": "Homer", "emoji": "🍺" },
-          "blue-seven": { "name": "Flanders", "emoji": "⛪" },
-          "blue-skip": { "name": "Homer", "emoji": "🏃" },
-          "blue-reverse": { "name": "Disco Stu", "emoji": "🕺" },
-          "green-four": { "name": "Lisa", "emoji": "🎷" },
-          "green-five": { "name": "Maggie", "emoji": "👶" },
-          "green-nine": { "name": "Comic Book Guy", "emoji": "📚" },
-          "yellow-skip": { "name": "Homer", "emoji": "🏃" },
-          "yellow-drawTwo": { "name": "Patty & Selma", "emoji": "💨" },
-          "red-two": { "name": "Marge", "emoji": "💙" },
-          "red-six": { "name": "Santa's Little Helper", "emoji": "🐶" },
-          "red-eight": { "name": "Mr. Burns", "emoji": "💰" },
-          "wild-wild": { "name": "Homer", "emoji": "🍩" },
-          "wild-wildDrawFour": { "name": "Ralph", "emoji": "🌭" }
-        }
+        "deckStyle": "simpsons",
+        "cardBackEmoji": "🍩",
+        "cardBackLabel": "Springfield"
       }
     }
   ]

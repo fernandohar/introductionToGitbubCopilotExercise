@@ -1,0 +1,43 @@
+{
+  "id": "uno-simpsons",
+  "name": "The Simpsons UNO",
+  "tagline": "Springfield's favourite colour-matching game",
+  "icon": "🍩",
+  "accentColor": "#FFD90F",
+  "source": "downloadable",
+  "rules": "Download for full Springfield rules in the app.",
+  "engineType": "shedding",
+  "settings": {
+    "minPlayers": 2,
+    "maxPlayers": 10,
+    "turnTimeLimit": 30,
+    "readyTimeLimit": 300
+  },
+  "theme": {
+    "hearts": "#E63946",
+    "diamonds": "#E63946",
+    "clubs": "#1D3557",
+    "spades": "#1D3557",
+    "cardBack": "#FFD90F",
+    "tableFelt": "#8FBC8F"
+  },
+  "sheddingDeck": {
+    "startingHandSize": 7,
+    "includeSkip": true,
+    "includeReverse": true,
+    "includeDrawTwo": true,
+    "includeWild": true,
+    "includeWildDrawFour": true
+  },
+  "sheddingTheme": {
+    "red": { "color": "#FF6B35", "pattern": "diamonds" },
+    "blue": { "color": "#4A90D9", "pattern": "dots" },
+    "green": { "color": "#5CB85C", "pattern": "checkered" },
+    "yellow": { "color": "#FFD90F", "pattern": "stripes" },
+    "wild": { "color": "#1A1A1A", "pattern": "characters" },
+    "cardBack": "#FFD90F",
+    "deckStyle": "simpsons",
+    "cardBackEmoji": "🍩",
+    "cardBackLabel": "Springfield"
+  }
+}
