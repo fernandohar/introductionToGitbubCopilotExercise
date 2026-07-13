@@ -10,6 +10,8 @@ struct Player: Identifiable, Codable, Hashable {
     var isReady: Bool
     var isNPC: Bool
     var npcDifficulty: NPCDifficulty?
+    var isEliminated: Bool
+    var hasCalledOneLeft: Bool
 
     init(
         id: UUID = UUID(),
@@ -20,7 +22,9 @@ struct Player: Identifiable, Codable, Hashable {
         isConnected: Bool = true,
         isReady: Bool = false,
         isNPC: Bool = false,
-        npcDifficulty: NPCDifficulty? = nil
+        npcDifficulty: NPCDifficulty? = nil,
+        isEliminated: Bool = false,
+        hasCalledOneLeft: Bool = false
     ) {
         self.id = id
         self.displayName = displayName
@@ -31,8 +35,11 @@ struct Player: Identifiable, Codable, Hashable {
         self.isReady = isReady
         self.isNPC = isNPC
         self.npcDifficulty = npcDifficulty
+        self.isEliminated = isEliminated
+        self.hasCalledOneLeft = hasCalledOneLeft
     }
 
     var cardCount: Int { sheddingHand.isEmpty ? hand.count : sheddingHand.count }
-    var hasWon: Bool { sheddingHand.isEmpty && hand.isEmpty }
+    var hasWon: Bool { !isEliminated && sheddingHand.isEmpty && hand.isEmpty }
+    var isActiveInSheddingGame: Bool { !isEliminated }
 }

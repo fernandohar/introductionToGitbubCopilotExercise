@@ -46,8 +46,10 @@ struct GameVariant: Identifiable, Codable, Hashable {
     var source: GameSource?
     var sheddingDeck: SheddingDeckConfig?
     var sheddingTheme: SheddingTheme?
+    var sheddingRules: SheddingRules?
 
     var accentSwiftUIColor: Color { Color(hex: accentColor) }
+    var resolvedSheddingRules: SheddingRules { SheddingRules.resolved(for: self) }
     var isDownloadable: Bool { source == .downloadable }
 }
 

@@ -78,7 +78,9 @@ enum SimpsonsDeckFaces {
         faces: all,
         deckStyle: "simpsons",
         cardBackEmoji: "🍩",
-        cardBackLabel: "Springfield"
+        cardBackLabel: "Springfield",
+        cardBackImage: "DeckArt/springfield/card-back",
+        deckPreviewImage: "DeckArt/springfield/deck-preview"
     )
 
     static let rules = """

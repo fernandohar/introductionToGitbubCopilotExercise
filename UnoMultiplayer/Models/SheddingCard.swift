@@ -95,8 +95,11 @@ struct SheddingTheme: Codable, Hashable {
     var deckStyle: String?
     var cardBackEmoji: String?
     var cardBackLabel: String?
+    var cardBackImage: String?
+    var deckPreviewImage: String?
 
     var isSimpsonsDeck: Bool { deckStyle == "simpsons" }
+    var isGolfDeck: Bool { deckStyle == "golf" }
 
     func style(for color: SheddingColor) -> SheddingSuitStyle {
         switch color {
@@ -111,6 +114,7 @@ struct SheddingTheme: Codable, Hashable {
     func face(for card: SheddingCard) -> SheddingCharacterFace? {
         if let face = faces?[card.faceKey] { return face }
         if isSimpsonsDeck { return SimpsonsDeckFaces.all[card.faceKey] }
+        if isGolfDeck { return GolfDeckFaces.all[card.faceKey] }
         return nil
     }
 

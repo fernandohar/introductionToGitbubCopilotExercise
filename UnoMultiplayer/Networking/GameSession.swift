@@ -13,6 +13,7 @@ enum GameMessage: Codable {
     case pass
     case hit
     case stand
+    case callOneLeft(playerID: UUID)
     case turnTimeout(playerID: UUID)
     case playerDisconnected(playerID: UUID)
     case error(String)
@@ -47,6 +48,7 @@ protocol GameSession: AnyObject {
     func sendPass()
     func sendHit()
     func sendStand()
+    func sendCallOneLeft()
     func handleTurnTimeout()
     func disconnect()
 }

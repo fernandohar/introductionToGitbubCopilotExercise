@@ -97,19 +97,82 @@ final class GameCatalogService: ObservableObject {
         }
     }
 
-    /// Merges bundled Springfield card art and full rules for The Simpsons UNO deck.
+    /// Merges bundled card art, rules, and assets for downloadable shedding games.
     private func enrichGame(_ game: GameVariant) -> GameVariant {
-        guard game.id == "uno-simpsons" else { return game }
+        switch game.id {
+        case "uno-classic", "colour-match-classic":
+            return enrichClassic(game)
+        case "uno-simpsons", "springfield-colour-match":
+            return enrichSimpsons(game)
+        case "uno-golf", "fairway-match":
+            return enrichGolf(game)
+        case "show-no-mercy":
+            return enrichShowNoMercy(game)
+        default:
+            return game
+        }
+    }
+
+    private func enrichClassic(_ game: GameVariant) -> GameVariant {
+        var enriched = game
+        var theme = enriched.sheddingTheme ?? SheddingTheme.classic
+        theme.cardBackImage = theme.cardBackImage ?? "DeckArt/classic/card-back"
+        theme.deckPreviewImage = theme.deckPreviewImage ?? "DeckArt/classic/deck-preview"
+        enriched.sheddingTheme = theme
+        enriched.sheddingRules = enriched.sheddingRules ?? .classic
+        return enriched
+    }
+
+    private func enrichSimpsons(_ game: GameVariant) -> GameVariant {
         var enriched = game
         enriched.rules = SimpsonsDeckFaces.rules
         var theme = enriched.sheddingTheme ?? SimpsonsDeckFaces.theme
         theme.deckStyle = "simpsons"
         theme.cardBackEmoji = theme.cardBackEmoji ?? "🍩"
         theme.cardBackLabel = theme.cardBackLabel ?? "Springfield"
+        theme.cardBackImage = theme.cardBackImage ?? "DeckArt/springfield/card-back"
+        theme.deckPreviewImage = theme.deckPreviewImage ?? "DeckArt/springfield/deck-preview"
         if (theme.faces ?? [:]).count < SimpsonsDeckFaces.all.count {
             theme.faces = SimpsonsDeckFaces.all
         }
         enriched.sheddingTheme = theme
+        enriched.sheddingRules = enriched.sheddingRules ?? .classic
+        return enriched
+    }
+
+    private func enrichGolf(_ game: GameVariant) -> GameVariant {
+        var enriched = game
+        enriched.rules = GolfDeckFaces.rules
+        var theme = enriched.sheddingTheme ?? GolfDeckFaces.theme
+        theme.deckStyle = "golf"
+        theme.cardBackEmoji = theme.cardBackEmoji ?? "⛳"
+        theme.cardBackLabel = theme.cardBackLabel ?? "Fairway Match"
+        theme.cardBackImage = theme.cardBackImage ?? "DeckArt/golf/card-back"
+        theme.deckPreviewImage = theme.deckPreviewImage ?? "DeckArt/golf/deck-preview"
+        if (theme.faces ?? [:]).count < GolfDeckFaces.all.count {
+            theme.faces = GolfDeckFaces.all
+        }
+        enriched.sheddingTheme = theme
+        enriched.sheddingRules = enriched.sheddingRules ?? .golf
+        return enriched
+    }
+
+    private func enrichShowNoMercy(_ game: GameVariant) -> GameVariant {
+        var enriched = enrichClassic(game)
+        enriched.rules = """
+        SHOW NO MERCY — Brutal House Rules
+
+        All standard colour-matching rules apply, plus:
+
+        • STACKING — +2 and +4 cards can be stacked; the next player draws the total
+        • ELIMINATION — Any player with more than 21 cards is out of the game
+        • ONE CARD LEFT — Tap "One left!" or draw 2 penalty cards
+        • 7-0 RULE — Coming soon: swap hands on 7, rotate on 0
+        • JUMP-IN — Coming soon: play an exact match out of turn
+
+        Last player standing, or first to empty their hand, wins!
+        """
+        enriched.sheddingRules = .showNoMercy
         return enriched
     }
 }

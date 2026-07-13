@@ -7,10 +7,11 @@ struct SheddingCardView: View {
 
     private var resolvedTheme: SheddingTheme? { theme }
     private var isSimpsons: Bool { resolvedTheme?.isSimpsonsDeck == true }
+    private var usesPortraitLayout: Bool { isSimpsons || resolvedTheme?.isGolfDeck == true }
 
     var body: some View {
         Group {
-            if isSimpsons {
+            if usesPortraitLayout {
                 simpsonsCard
             } else {
                 standardCard
@@ -209,6 +210,21 @@ struct SheddingCardBackView: View {
     var theme: SheddingTheme?
 
     var body: some View {
+        Group {
+            if let imageName = theme?.cardBackImage {
+                Image(imageName)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 64, height: 92)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
+            } else {
+                programmaticBack
+            }
+        }
+    }
+
+    private var programmaticBack: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(hex: theme?.cardBack ?? "#4A6FA5"))
@@ -222,9 +238,14 @@ struct SheddingCardBackView: View {
                     Text(theme?.cardBackLabel ?? "Springfield")
                         .font(.system(size: 8, weight: .bold))
                         .foregroundStyle(Color(hex: "#D4522A"))
-                    Text("UNO")
-                        .font(.system(size: 14, weight: .black))
-                        .foregroundStyle(Color(hex: "#E53935"))
+                }
+            } else if theme?.isGolfDeck == true {
+                VStack(spacing: 4) {
+                    Text(theme?.cardBackEmoji ?? "⛳")
+                        .font(.system(size: 28))
+                    Text(theme?.cardBackLabel ?? "Fairway Match")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(.white)
                 }
             } else {
                 Image(systemName: "suit.heart.fill")

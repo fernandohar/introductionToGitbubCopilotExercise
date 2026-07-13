@@ -138,6 +138,8 @@ final class AppViewModel: ObservableObject, GameSessionDelegate {
     func hit() { session.sendHit() }
     func stand() { session.sendStand() }
 
+    func callOneLeft() { session.sendCallOneLeft() }
+
     func playableCards() -> [PlayingCard] {
         guard let hand = localPlayer?.hand,
               let state = gameState,

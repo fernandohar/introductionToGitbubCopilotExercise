@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "games": [
     {
       "id": "big-two",
@@ -26,8 +26,8 @@
       "theme": { "hearts": "#E63946", "diamonds": "#E63946", "clubs": "#1D3557", "spades": "#1D3557", "cardBack": "#4A6FA5", "tableFelt": "#8FBC8F" }
     },
     {
-      "id": "uno-classic",
-      "name": "UNO Classic",
+      "id": "colour-match-classic",
+      "name": "Colour Match Classic",
       "tagline": "The original colour-matching card game",
       "icon": "🃏",
       "accentColor": "#E53935",
@@ -37,18 +37,21 @@
       "settings": { "minPlayers": 2, "maxPlayers": 10, "turnTimeLimit": 30, "readyTimeLimit": 300 },
       "theme": { "hearts": "#E63946", "diamonds": "#E63946", "clubs": "#1D3557", "spades": "#1D3557", "cardBack": "#4A6FA5", "tableFelt": "#8FBC8F" },
       "sheddingDeck": { "startingHandSize": 7, "includeSkip": true, "includeReverse": true, "includeDrawTwo": true, "includeWild": true, "includeWildDrawFour": true },
+      "sheddingRules": { "profile": "classic", "requireOneLeftCall": true },
       "sheddingTheme": {
         "red": { "color": "#E53935", "pattern": "solid" },
         "blue": { "color": "#1E88E5", "pattern": "solid" },
         "green": { "color": "#43A047", "pattern": "solid" },
         "yellow": { "color": "#FDD835", "pattern": "solid" },
         "wild": { "color": "#8E24AA", "pattern": "solid" },
-        "cardBack": "#4A6FA5"
+        "cardBack": "#4A6FA5",
+        "cardBackImage": "DeckArt/classic/card-back",
+        "deckPreviewImage": "DeckArt/classic/deck-preview"
       }
     },
     {
-      "id": "uno-simpsons",
-      "name": "The Simpsons UNO",
+      "id": "springfield-colour-match",
+      "name": "Springfield Colour Match",
       "tagline": "Springfield's favourite colour-matching game",
       "icon": "🍩",
       "accentColor": "#FFD90F",
@@ -58,6 +61,7 @@
       "settings": { "minPlayers": 2, "maxPlayers": 10, "turnTimeLimit": 30, "readyTimeLimit": 300 },
       "theme": { "hearts": "#E63946", "diamonds": "#E63946", "clubs": "#1D3557", "spades": "#1D3557", "cardBack": "#FFD90F", "tableFelt": "#8FBC8F" },
       "sheddingDeck": { "startingHandSize": 7, "includeSkip": true, "includeReverse": true, "includeDrawTwo": true, "includeWild": true, "includeWildDrawFour": true },
+      "sheddingRules": { "profile": "classic", "requireOneLeftCall": true },
       "sheddingTheme": {
         "red": { "color": "#FF6B35", "pattern": "diamonds" },
         "blue": { "color": "#4A90D9", "pattern": "dots" },
@@ -67,7 +71,68 @@
         "cardBack": "#FFD90F",
         "deckStyle": "simpsons",
         "cardBackEmoji": "🍩",
-        "cardBackLabel": "Springfield"
+        "cardBackLabel": "Springfield",
+        "cardBackImage": "DeckArt/springfield/card-back",
+        "deckPreviewImage": "DeckArt/springfield/deck-preview"
+      }
+    },
+    {
+      "id": "fairway-match",
+      "name": "Fairway Match",
+      "tagline": "Golf-themed colour-matching on the course",
+      "icon": "⛳",
+      "accentColor": "#2D6A4F",
+      "source": "downloadable",
+      "rules": "See in-app rules for the full Fairway Match rulebook.",
+      "engineType": "shedding",
+      "settings": { "minPlayers": 2, "maxPlayers": 10, "turnTimeLimit": 30, "readyTimeLimit": 300 },
+      "theme": { "hearts": "#E63946", "diamonds": "#E63946", "clubs": "#1D3557", "spades": "#1D3557", "cardBack": "#2D6A4F", "tableFelt": "#8FBC8F" },
+      "sheddingDeck": { "startingHandSize": 7, "includeSkip": true, "includeReverse": true, "includeDrawTwo": true, "includeWild": true, "includeWildDrawFour": true },
+      "sheddingRules": { "profile": "golf", "requireOneLeftCall": true },
+      "sheddingTheme": {
+        "red": { "color": "#C4A882", "pattern": "diamonds" },
+        "blue": { "color": "#4A90D9", "pattern": "dots" },
+        "green": { "color": "#2D6A4F", "pattern": "stripes" },
+        "yellow": { "color": "#F4D35E", "pattern": "checkered" },
+        "wild": { "color": "#1A1A1A", "pattern": "characters" },
+        "cardBack": "#2D6A4F",
+        "deckStyle": "golf",
+        "cardBackEmoji": "⛳",
+        "cardBackLabel": "Fairway Match",
+        "cardBackImage": "DeckArt/golf/card-back",
+        "deckPreviewImage": "DeckArt/golf/deck-preview"
+      }
+    },
+    {
+      "id": "show-no-mercy",
+      "name": "Show No Mercy",
+      "tagline": "Stack, survive, or get eliminated",
+      "icon": "💀",
+      "accentColor": "#B71C1C",
+      "source": "downloadable",
+      "rules": "See in-app rules for brutal Show No Mercy house rules.",
+      "engineType": "shedding",
+      "settings": { "minPlayers": 2, "maxPlayers": 10, "turnTimeLimit": 30, "readyTimeLimit": 300 },
+      "theme": { "hearts": "#E63946", "diamonds": "#E63946", "clubs": "#1D3557", "spades": "#1D3557", "cardBack": "#4A6FA5", "tableFelt": "#8FBC8F" },
+      "sheddingDeck": { "startingHandSize": 7, "includeSkip": true, "includeReverse": true, "includeDrawTwo": true, "includeWild": true, "includeWildDrawFour": true },
+      "sheddingRules": {
+        "profile": "showNoMercy",
+        "maxHandBeforeElimination": 21,
+        "allowStackingDraws": true,
+        "requireOneLeftCall": true,
+        "oneLeftPenaltyCards": 2,
+        "jumpInEnabled": true,
+        "sevenZeroEnabled": true
+      },
+      "sheddingTheme": {
+        "red": { "color": "#E53935", "pattern": "solid" },
+        "blue": { "color": "#1E88E5", "pattern": "solid" },
+        "green": { "color": "#43A047", "pattern": "solid" },
+        "yellow": { "color": "#FDD835", "pattern": "solid" },
+        "wild": { "color": "#8E24AA", "pattern": "solid" },
+        "cardBack": "#4A6FA5",
+        "cardBackImage": "DeckArt/classic/card-back",
+        "deckPreviewImage": "DeckArt/classic/deck-preview"
       }
     }
   ]

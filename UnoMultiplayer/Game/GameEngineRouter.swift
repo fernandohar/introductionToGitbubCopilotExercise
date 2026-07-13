@@ -17,7 +17,7 @@ struct GameEngineRouter {
     }
 
     static func playableSheddingCards(in hand: [SheddingCard], for state: GameState, variant: GameVariant) -> [SheddingCard] {
-        SheddingEngine.playableCards(in: hand, for: state, config: variant.sheddingDeck ?? SheddingDeckConfig())
+        SheddingEngine.playableCards(in: hand, for: state, variant: variant)
     }
 
     static func play(card: PlayingCard, from playerID: UUID, in state: inout GameState, variant: GameVariant) throws {
@@ -35,6 +35,10 @@ struct GameEngineRouter {
         variant: GameVariant
     ) throws {
         try SheddingEngine.play(card: card, chosenColor: chosenColor, from: playerID, in: &state, variant: variant)
+    }
+
+    static func callOneLeft(for playerID: UUID, in state: inout GameState, variant: GameVariant) {
+        SheddingEngine.callOneLeft(for: playerID, in: &state)
     }
 
     static func drawShedding(for playerID: UUID, in state: inout GameState, variant: GameVariant) throws {

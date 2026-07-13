@@ -295,9 +295,10 @@ struct GameView: View {
                     Button("Draw") { app.drawCard() }
                         .buttonStyle(.bordered)
                     if app.hasOneCardLeft {
-                        Text("One left!")
+                        Button("One left!") { app.callOneLeft() }
                             .font(.caption.bold())
-                            .foregroundStyle(AppTheme.accent)
+                            .buttonStyle(.borderedProminent)
+                            .tint(AppTheme.accent)
                     }
                 default:
                     EmptyView()

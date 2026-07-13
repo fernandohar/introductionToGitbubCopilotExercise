@@ -10,8 +10,8 @@ struct RulesReadyView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         header(for: game)
 
-                        if game.sheddingTheme?.isSimpsonsDeck == true {
-                            SimpsonsDeckPreview(theme: game.sheddingTheme)
+                        if game.sheddingTheme?.deckPreviewImage != nil || game.sheddingTheme?.isSimpsonsDeck == true || game.sheddingTheme?.isGolfDeck == true {
+                            SheddingDeckPreview(theme: game.sheddingTheme)
                         }
 
                         Divider()
@@ -57,7 +57,8 @@ struct RulesReadyView: View {
     }
 
     private func displayRules(for game: GameVariant) -> String {
-        if game.id == "uno-simpsons" { return SimpsonsDeckFaces.rules }
+        if game.id == "uno-simpsons" || game.id == "springfield-colour-match" { return SimpsonsDeckFaces.rules }
+        if game.id == "uno-golf" || game.id == "fairway-match" { return GolfDeckFaces.rules }
         return game.rules
     }
 
@@ -131,7 +132,7 @@ struct RulesReadyView: View {
     }
 }
 
-struct SimpsonsDeckPreview: View {
+struct SheddingDeckPreview: View {
     let theme: SheddingTheme?
 
     private let samples: [(SheddingColor, SheddingValue)] = [
@@ -141,6 +142,12 @@ struct SimpsonsDeckPreview: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Deck Preview").font(.headline)
+            if let preview = theme?.deckPreviewImage {
+                Image(preview)
+                    .resizable()
+                    .scaledToFit()
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     SheddingCardBackView(theme: theme)

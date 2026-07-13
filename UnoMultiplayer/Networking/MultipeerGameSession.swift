@@ -121,6 +121,11 @@ final class MultipeerGameSession: NSObject, GameSession {
         if hostMode { handleStand(playerID: localPlayerID) }
     }
 
+    func sendCallOneLeft() {
+        send(.callOneLeft(playerID: localPlayerID))
+        if hostMode { handleCallOneLeft(playerID: localPlayerID) }
+    }
+
     func handleTurnTimeout() {
         guard let current = gameState.currentPlayer else { return }
         send(.turnTimeout(playerID: current.id))
@@ -229,6 +234,10 @@ final class MultipeerGameSession: NSObject, GameSession {
             guard hostMode else { return }
             handleStand(playerID: playerID(for: peer) ?? localPlayerID)
 
+        case let .callOneLeft(playerID):
+            guard hostMode else { return }
+            handleCallOneLeft(playerID: playerID)
+
         case let .turnTimeout(playerID):
             guard hostMode else { return }
             try? GameEngineRouter.handleTurnTimeout(for: playerID, in: &gameState, variant: variant)
@@ -310,6 +319,11 @@ final class MultipeerGameSession: NSObject, GameSession {
         } catch {
             send(.error(error.localizedDescription))
         }
+    }
+
+    private func handleCallOneLeft(playerID: UUID) {
+        GameEngineRouter.callOneLeft(for: playerID, in: &gameState, variant: variant)
+        publishState()
     }
 
     private func playerID(for peer: MCPeerID?) -> UUID? {

@@ -142,6 +142,11 @@ final class LocalGameSession: GameSession {
         }
     }
 
+    func sendCallOneLeft() {
+        GameEngineRouter.callOneLeft(for: localPlayerID, in: &gameState, variant: variant)
+        publishState()
+    }
+
     func handleTurnTimeout() {
         guard gameState.phase == .inProgress, let current = gameState.currentPlayer else { return }
         do {
