@@ -1,0 +1,164 @@
+{
+  "symbol": "0700.HK",
+  "data_start": "2004-06-16",
+  "data_end": "2026-08-19",
+  "years_covered": 22.2,
+  "steps_evaluated": 150,
+  "directional_predictions": 119,
+  "accuracy_pct": 52.1,
+  "news_accuracy_pct": 0.0,
+  "weight_updates": 254,
+  "final_weights": {
+    "technical": 0.362,
+    "news": 0.399,
+    "behavior": 0.2391
+  },
+  "initial_weights": {
+    "technical": 0.3677,
+    "news": 0.3755,
+    "behavior": 0.2568
+  },
+  "component_hit_rates": {
+    "technical": 16.01,
+    "news": 19.42,
+    "behavior": 13.12
+  },
+  "recent_samples": [
+    {
+      "date": "2025-11-19",
+      "predicted": "bearish",
+      "actual": "neutral",
+      "forward_return_pct": -1.37,
+      "score": -0.4091,
+      "correct": false
+    },
+    {
+      "date": "2025-12-18",
+      "predicted": "bearish",
+      "actual": "neutral",
+      "forward_return_pct": -1.24,
+      "score": -0.5647,
+      "correct": false
+    },
+    {
+      "date": "2026-01-21",
+      "predicted": "bearish",
+      "actual": "bearish",
+      "forward_return_pct": -13.28,
+      "score": -0.4091,
+      "correct": true
+    },
+    {
+      "date": "2026-02-24",
+      "predicted": "bearish",
+      "actual": "bearish",
+      "forward_return_pct": -4.69,
+      "score": -0.6133,
+      "correct": true
+    },
+    {
+      "date": "2026-03-25",
+      "predicted": "bearish",
+      "actual": "bearish",
+      "forward_return_pct": -5.2,
+      "score": -0.676,
+      "correct": true
+    },
+    {
+      "date": "2026-04-28",
+      "predicted": "bearish",
+      "actual": "bearish",
+      "forward_return_pct": -6.91,
+      "score": -0.676,
+      "correct": true
+    },
+    {
+      "date": "2026-05-29",
+      "predicted": "bearish",
+      "actual": "neutral",
+      "forward_return_pct": 0.7,
+      "score": -0.5564,
+      "correct": false
+    },
+    {
+      "date": "2026-06-30",
+      "predicted": "neutral",
+      "actual": "bullish",
+      "forward_return_pct": 10.56,
+      "score": 0.2416,
+      "correct": false
+    }
+  ],
+  "rolling_accuracy": [
+    {
+      "date": "2014-09-18",
+      "accuracy_pct": 70.0
+    },
+    {
+      "date": "2015-10-29",
+      "accuracy_pct": 55.0
+    },
+    {
+      "date": "2016-10-04",
+      "accuracy_pct": 56.67
+    },
+    {
+      "date": "2016-11-03",
+      "accuracy_pct": 56.67
+    },
+    {
+      "date": "2017-10-11",
+      "accuracy_pct": 62.5
+    },
+    {
+      "date": "2018-12-18",
+      "accuracy_pct": 62.0
+    },
+    {
+      "date": "2019-12-30",
+      "accuracy_pct": 56.67
+    },
+    {
+      "date": "2020-01-31",
+      "accuracy_pct": 56.67
+    },
+    {
+      "date": "2021-02-04",
+      "accuracy_pct": 55.71
+    },
+    {
+      "date": "2021-03-09",
+      "accuracy_pct": 55.71
+    },
+    {
+      "date": "2022-04-19",
+      "accuracy_pct": 53.75
+    },
+    {
+      "date": "2023-05-30",
+      "accuracy_pct": 53.33
+    },
+    {
+      "date": "2024-04-08",
+      "accuracy_pct": 53.0
+    },
+    {
+      "date": "2025-05-21",
+      "accuracy_pct": 51.82
+    },
+    {
+      "date": "2025-06-19",
+      "accuracy_pct": 51.82
+    },
+    {
+      "date": "2025-07-21",
+      "accuracy_pct": 51.82
+    }
+  ],
+  "methodology": {
+    "forward_horizon_days": 22,
+    "step_days": 21,
+    "return_threshold_pct": 2.0,
+    "news_note": "Historical news archives are unavailable for multi-decade backtests. News sentiment uses a price-action proxy fed through the same keyword engine, then weights auto-adjust when predictions miss realized returns."
+  }
+}

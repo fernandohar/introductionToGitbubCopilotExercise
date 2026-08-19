@@ -1,0 +1,74 @@
+{
+  "AAPL": {
+    "name": "Apple Inc.",
+    "file": "AAPL.json"
+  },
+  "MSFT": {
+    "name": "Microsoft Corporation",
+    "file": "MSFT.json"
+  },
+  "GOOGL": {
+    "name": "Alphabet Inc.",
+    "file": "GOOGL.json"
+  },
+  "AMZN": {
+    "name": "Amazon.com, Inc.",
+    "file": "AMZN.json"
+  },
+  "NVDA": {
+    "name": "NVIDIA Corporation",
+    "file": "NVDA.json"
+  },
+  "TSLA": {
+    "name": "Tesla, Inc.",
+    "file": "TSLA.json"
+  },
+  "META": {
+    "name": "Meta Platforms, Inc.",
+    "file": "META.json"
+  },
+  "JPM": {
+    "name": "JPMorgan Chase & Co.",
+    "file": "JPM.json"
+  },
+  "0700.HK": {
+    "name": "Tencent Holdings",
+    "file": "0700.HK.json"
+  },
+  "9988.HK": {
+    "name": "Alibaba Group",
+    "file": "9988.HK.json"
+  },
+  "0005.HK": {
+    "name": "HSBC Holdings",
+    "file": "0005.HK.json"
+  },
+  "3690.HK": {
+    "name": "Meituan",
+    "file": "3690.HK.json"
+  },
+  "1810.HK": {
+    "name": "Xiaomi Corporation",
+    "file": "1810.HK.json"
+  },
+  "9618.HK": {
+    "name": "JD.com",
+    "file": "9618.HK.json"
+  },
+  "0941.HK": {
+    "name": "China Mobile",
+    "file": "0941.HK.json"
+  },
+  "2318.HK": {
+    "name": "Ping An Insurance",
+    "file": "2318.HK.json"
+  },
+  "2388.HK": {
+    "name": "BOC Hong Kong (Holdings)",
+    "file": "2388.HK.json"
+  },
+  "0011.HK": {
+    "name": "Hang Seng Bank",
+    "file": "0011.HK.json"
+  }
+}
