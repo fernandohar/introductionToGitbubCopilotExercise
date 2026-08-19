@@ -184,6 +184,13 @@ def validate_batch(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+@app.post("/api/validate/banks")
+def validate_banks(years: float = Query(10.0, ge=1, le=40)) -> dict:
+    from app.bank_tuning import tune_banks
+
+    return tune_banks(years=years)
+
+
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")

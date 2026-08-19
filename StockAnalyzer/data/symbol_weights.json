@@ -1,20 +1,22 @@
 {
   "2388.HK": {
     "weights": {
-      "technical": 0.624,
-      "news": 0.1641,
-      "behavior": 0.2119
+      "technical": 0.7,
+      "news": 0.15,
+      "behavior": 0.15,
+      "threshold": 0.2,
+      "learning_rate": 0.02
     },
     "best_score_pct": 56.67,
     "target_90_pct_met": false
   },
   "0011.HK": {
     "weights": {
-      "technical": 0.5678,
-      "news": 0.1832,
-      "behavior": 0.249,
-      "threshold": 0.25,
-      "learning_rate": 0.05
+      "technical": 0.7,
+      "news": 0.15,
+      "behavior": 0.15,
+      "threshold": 0.2,
+      "learning_rate": 0.02
     },
     "best_score_pct": 32.35,
     "target_90_pct_met": false

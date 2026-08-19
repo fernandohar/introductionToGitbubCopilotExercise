@@ -10,6 +10,7 @@ A mobile-friendly web app for analyzing **Hong Kong (HKEX)** and US stocks with 
 - **Technical analysis** — RSI, MACD, Bollinger Bands, moving averages
 - **Fundamentals & compare** — Key ratios and normalized performance charts
 - **Mock Market backtest** — Pick a past date, custom stock lists, adjustable portfolio size, manual pick comparison
+- **Adaptive validation** — 40-year walk-forward test; auto-tunes model weights when predictions miss
 - **Mobile-ready UI** — Works in phone browsers with collapsible sidebar
 
 ## Quick start (local)
@@ -73,11 +74,32 @@ curl "http://localhost:8000/api/backtest?date=2025-11-01&market=hk&top_n=5&symbo
 
 # Compare system suggestion vs manual picks
 curl "http://localhost:8000/api/backtest?date=2025-11-01&market=hk&manual_symbols=0700.HK,1810.HK"
+
+# Validate predictions over historic data and adapt weights
+curl -X POST "http://localhost:8000/api/validate/run?symbol=AAPL&adapt=true"
 ```
+
+## Adaptive model validation (up to 40 years)
+
+The **Validate & adapt** button in Mock Market (or the API above):
+
+1. Walks forward month-by-month through up to **40 years** of daily prices
+2. Makes a bullish/bearish/neutral call using the trend model at each point in time
+3. Compares against the **realized price move** over the next month
+4. **Auto-adjusts weights** for technical, news, and behavior when predictions are wrong
+
+Run from terminal:
+
+```bash
+cd StockAnalyzer
+PYTHONPATH=. python3 scripts/run_validation.py AAPL 0700.HK
+```
+
+**News limitation:** Free APIs do not provide decades of archived headlines. Historical validation uses a **price-action news proxy** through the same keyword sentiment engine; live analysis still uses real headlines when available. Adapted weights are saved to `data/adaptive_weights.json` and used by the Trend & News tab.
 
 ## Trend scoring
 
-The **Trend & News** score blends three factors:
+The **Trend & News** score blends three factors (weights adapt after validation):
 
 | Factor | Weight | Inputs |
 |--------|--------|--------|
