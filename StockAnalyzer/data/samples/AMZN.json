@@ -2,8 +2,9 @@
   "symbol": "AMZN",
   "name": "Amazon.com, Inc.",
   "currency": "USD",
-  "sector": "Technology",
-  "industry": "Internet Content & Information",
+  "sector": "Consumer Cyclical",
+  "industry": "Internet Retail",
+  "market": "US",
   "history": [
     {
       "date": "2025-07-15",

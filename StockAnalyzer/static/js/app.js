@@ -1,4 +1,5 @@
-const POPULAR = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "JPM"];
+const POPULAR_US = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "JPM"];
+const POPULAR_HK = ["0700.HK", "9988.HK", "0005.HK", "3690.HK", "1810.HK", "9618.HK", "0941.HK", "2318.HK"];
 const WATCHLIST_KEY = "stockAnalyzerWatchlist";
 
 const state = {
@@ -7,6 +8,7 @@ const state = {
   quote: null,
   history: null,
   fundamentals: null,
+  trend: null,
   charts: {},
 };
 
@@ -74,15 +76,29 @@ function renderWatchlist() {
 }
 
 function renderPopularChips() {
-  const container = $("popularChips");
-  POPULAR.forEach((symbol) => {
+  renderChipGroup("popularChips", POPULAR_US);
+  renderChipGroup("hkChips", POPULAR_HK);
+}
+
+function renderChipGroup(containerId, symbols) {
+  const container = $(containerId);
+  container.innerHTML = "";
+  symbols.forEach((symbol) => {
     const btn = document.createElement("button");
     btn.className = "chip";
     btn.type = "button";
-    btn.textContent = symbol;
-    btn.addEventListener("click", () => loadSymbol(symbol));
+    btn.textContent = symbol.replace(".HK", "");
+    btn.title = symbol;
+    btn.addEventListener("click", () => {
+      closeSidebar();
+      loadSymbol(symbol);
+    });
     container.appendChild(btn);
   });
+}
+
+function closeSidebar() {
+  $("sidebar")?.classList.remove("open");
 }
 
 function setLoading(isLoading) {
@@ -295,6 +311,88 @@ function renderCharts(history) {
   });
 }
 
+function sentimentClass(label) {
+  if (label === "positive" || label === "bullish" || label === "accumulation") return "positive";
+  if (label === "negative" || label === "bearish" || label === "distribution") return "negative";
+  return "neutral";
+}
+
+function renderTrendInsights(trend) {
+  const overall = trend.overall || {};
+  $("trendHero").innerHTML = `
+    <div class="trend-card ${sentimentClass(overall.label)}">
+      <div class="trend-label">${(overall.label || "neutral").toUpperCase()} TREND</div>
+      <div class="trend-score">Score ${formatNumber(overall.score, 2)}</div>
+      <p>${overall.suggested_action || ""}</p>
+      <div class="trend-meta">${trend.market === "HK" ? "Hong Kong" : "US"} · ${trend.currency || ""} · ${trend.period}</div>
+    </div>
+  `;
+
+  const drivers = overall.drivers || [];
+  $("driverGrid").innerHTML = drivers
+    .map(
+      (driver) => `
+      <div class="driver-card">
+        <div class="label">${driver.factor}</div>
+        <div class="value ${sentimentClass(driver.label)}">${(driver.label || "neutral").toUpperCase()}</div>
+        <div class="sub">${formatNumber(driver.score, 2)}</div>
+      </div>
+    `
+    )
+    .join("");
+
+  const notes = [
+    ...(trend.technical?.notes || []),
+    ...(trend.news?.notes || []),
+    ...(trend.behavior?.notes || []),
+  ];
+
+  const newsItems = trend.recent_news || [];
+  $("newsList").innerHTML = `
+    <div class="behavior-grid">
+      <div class="behavior-card">
+        <div class="label">Volume vs 20-day avg</div>
+        <div class="value">${trend.behavior?.volume_ratio ?? "—"}x</div>
+      </div>
+      <div class="behavior-card">
+        <div class="label">5-day momentum</div>
+        <div class="value">${formatPercent(trend.behavior?.momentum_5d)}</div>
+      </div>
+      <div class="behavior-card">
+        <div class="label">Buy pressure</div>
+        <div class="value">${formatNumber(trend.behavior?.buy_pressure, 2)}</div>
+      </div>
+      <div class="behavior-card">
+        <div class="label">News sentiment</div>
+        <div class="value ${sentimentClass(trend.news?.label)}">${(trend.news?.label || "neutral").toUpperCase()}</div>
+      </div>
+    </div>
+    <ul class="notes-list">${notes.map((note) => `<li>${note}</li>`).join("")}</ul>
+    ${newsItems
+      .map(
+        (item) => `
+        <article class="news-item">
+          <div class="news-head">
+            <span class="news-sentiment ${sentimentClass(item.sentiment_label)}">${(item.sentiment_label || "neutral").toUpperCase()}</span>
+            <span class="news-region">${item.region || "news"}</span>
+          </div>
+          <h4>${item.title}</h4>
+          <p>${item.summary || ""}</p>
+          <div class="news-meta">${item.source || ""}</div>
+        </article>
+      `
+      )
+      .join("")}
+  `;
+}
+
+async function loadTrendInsights() {
+  if (!state.symbol) return;
+  const trend = await api(`/api/trend/${encodeURIComponent(state.symbol)}?period=${state.period === "1mo" ? "3mo" : state.period}`);
+  state.trend = trend;
+  renderTrendInsights(trend);
+}
+
 function renderFundamentals(data) {
   const fields = [
     ["Sector", data.sector],
@@ -369,25 +467,32 @@ async function loadSymbol(symbol) {
   setLoading(true);
 
   try {
-    const [quote, history, fundamentals] = await Promise.all([
-      api(`/api/quote/${normalized}`),
-      api(`/api/history/${normalized}?period=${state.period}`),
-      api(`/api/fundamentals/${normalized}`),
+    const [quote, history, fundamentals, trend] = await Promise.all([
+      api(`/api/quote/${encodeURIComponent(normalized)}`),
+      api(`/api/history/${encodeURIComponent(normalized)}?period=${state.period}`),
+      api(`/api/fundamentals/${encodeURIComponent(normalized)}`),
+      api(`/api/trend/${encodeURIComponent(normalized)}?period=${state.period === "1mo" ? "3mo" : state.period}`),
     ]);
 
     state.quote = quote;
     state.history = history;
     state.fundamentals = fundamentals;
+    state.trend = trend;
 
     renderHero(quote);
     renderMetrics(history);
     renderSignalBanner(history.signals || {});
     renderCharts(history);
     renderFundamentals(fundamentals);
+    renderTrendInsights(trend);
     showPanels(true);
     activateTab("overview");
+    closeSidebar();
 
-    $("compareInput").value = [normalized, "MSFT", "GOOGL"].filter((v, i, arr) => arr.indexOf(v) === i).join(", ");
+    const compareDefaults = normalized.endsWith(".HK")
+      ? [normalized, "0700.HK", "9988.HK"]
+      : [normalized, "MSFT", "GOOGL"];
+    $("compareInput").value = [...new Set(compareDefaults)].join(", ");
   } catch (error) {
     alert(error.message || "Failed to load stock data");
   } finally {
@@ -415,6 +520,7 @@ function activateTab(tabName) {
 
   const panels = {
     overview: "overviewPanel",
+    insights: "insightsPanel",
     technical: "technicalPanel",
     fundamentals: "fundamentalsPanel",
     compare: "comparePanel",
@@ -427,6 +533,13 @@ function activateTab(tabName) {
   if (tabName === "compare" && state.symbol) {
     renderCompare($("compareInput").value).catch((error) => alert(error.message));
   }
+  if (tabName === "insights" && state.symbol) {
+    if (state.trend) {
+      renderTrendInsights(state.trend);
+    } else {
+      loadTrendInsights().catch((error) => alert(error.message));
+    }
+  }
 }
 
 function setupSearch() {
@@ -435,7 +548,7 @@ function setupSearch() {
     const query = $("searchInput").value.trim();
     if (!query) return;
 
-    if (/^[A-Za-z.\-^]+$/.test(query) && query.length <= 8) {
+    if (/^[\d]{1,5}(\.HK)?$/i.test(query) || (/^[A-Za-z0-9.\-^]+$/i.test(query) && query.length <= 12)) {
       $("searchResults").classList.add("hidden");
       await loadSymbol(query);
       return;
@@ -517,4 +630,8 @@ document.addEventListener("DOMContentLoaded", () => {
   setupPeriodTabs();
   setupWatchlist();
   setupCompare();
+
+  $("menuToggle")?.addEventListener("click", () => {
+    $("sidebar").classList.toggle("open");
+  });
 });

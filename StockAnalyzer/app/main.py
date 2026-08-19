@@ -35,6 +35,37 @@ def search(q: str = Query(..., min_length=1), limit: int = Query(10, ge=1, le=25
     return {"query": q, "results": data.search_symbols(q, limit=limit)}
 
 
+@app.get("/api/markets")
+def markets() -> dict:
+    from app.symbols import HK_POPULAR, US_POPULAR
+
+    return {
+        "us": US_POPULAR,
+        "hk": [item["symbol"] for item in HK_POPULAR],
+        "hk_details": HK_POPULAR,
+    }
+
+
+@app.get("/api/news/{symbol}")
+def news(symbol: str, limit: int = Query(12, ge=1, le=30)) -> dict:
+    from app.news import get_news
+
+    try:
+        return get_news(symbol, limit=limit)
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail=f"Unable to fetch news for {symbol}") from exc
+
+
+@app.get("/api/trend/{symbol}")
+def trend(symbol: str, period: str = Query("6mo")) -> dict:
+    from app.trend import get_trend_analysis
+
+    try:
+        return get_trend_analysis(symbol, period=period)
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail=f"Unable to analyze trend for {symbol}") from exc
+
+
 @app.get("/api/quote/{symbol}")
 def quote(symbol: str) -> dict:
     try:

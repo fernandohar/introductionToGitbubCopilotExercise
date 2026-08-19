@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Stock Analyzer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0f14" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>HK Stock Analyzer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -13,19 +15,20 @@
 </head>
 <body>
   <div class="app">
-    <aside class="sidebar">
+    <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open menu">☰</button>
+    <aside class="sidebar" id="sidebar">
       <div class="brand">
         <div class="brand-icon">📈</div>
         <div>
-          <h1>Stock Analyzer</h1>
-          <p>Technical & fundamental insights</p>
+          <h1>HK Stock Analyzer</h1>
+          <p>Hong Kong & global market insights</p>
         </div>
       </div>
 
       <form class="search-form" id="searchForm">
         <label for="searchInput">Search ticker or company</label>
         <div class="search-row">
-          <input id="searchInput" type="text" placeholder="AAPL, MSFT, TSLA..." autocomplete="off" />
+          <input id="searchInput" type="text" placeholder="0700, 9988.HK, AAPL..." autocomplete="off" />
           <button type="submit">Search</button>
         </div>
       </form>
@@ -41,7 +44,12 @@
       </section>
 
       <section class="panel">
-        <h2>Popular</h2>
+        <h2>Hong Kong (HKEX)</h2>
+        <div class="chip-row" id="hkChips"></div>
+      </section>
+
+      <section class="panel">
+        <h2>US Popular</h2>
         <div class="chip-row" id="popularChips"></div>
       </section>
     </aside>
@@ -49,8 +57,8 @@
     <main class="content">
       <header class="hero" id="hero">
         <div class="hero-empty">
-          <h2>Analyze any stock</h2>
-          <p>Search a ticker to view price charts, technical indicators, fundamentals, and trading signals.</p>
+          <h2>Analyze Hong Kong & global stocks</h2>
+          <p>Search a ticker to view charts, news-driven trend analysis, buy/sell behavior, and fundamentals.</p>
         </div>
       </header>
 
@@ -70,6 +78,7 @@
 
       <section class="tabs hidden" id="tabBar">
         <button class="tab active" data-tab="overview">Overview</button>
+        <button class="tab" data-tab="insights">Trend & News</button>
         <button class="tab" data-tab="technical">Technical</button>
         <button class="tab" data-tab="fundamentals">Fundamentals</button>
         <button class="tab" data-tab="compare">Compare</button>
@@ -83,6 +92,15 @@
         <div class="chart-card">
           <h3>Volume</h3>
           <canvas id="volumeChart"></canvas>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="insightsPanel">
+        <div class="trend-hero" id="trendHero"></div>
+        <div class="driver-grid" id="driverGrid"></div>
+        <div class="chart-card">
+          <h3>Recent News & Sentiment</h3>
+          <div class="news-list" id="newsList"></div>
         </div>
       </section>
 

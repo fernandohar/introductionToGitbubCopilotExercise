@@ -13,6 +13,7 @@ import yfinance as yf
 from app.analysis import enrich_history, generate_signals
 from app.providers import demo, finnhub
 from app.serializers import format_history, safe_float
+from app.symbols import normalize_symbol, search_hk_catalog
 
 PERIOD_MAP = {
     "1mo": "1mo",
@@ -120,7 +121,7 @@ def _yahoo_search(query: str, limit: int) -> list[dict[str, str]]:
     except Exception:
         pass
 
-    if not items and query.replace(".", "").replace("-", "").isalnum():
+    if not items and query.replace(".", "").replace("-", "").isalnum() and len(query) <= 8:
         info = _try_ticker_info(query)
         items.append(
             {
@@ -232,7 +233,7 @@ def _extract_close_series(raw: pd.DataFrame, symbol: str) -> pd.Series:
 
 def _yahoo_compare(symbols: list[str], period: str) -> dict[str, Any]:
     period_key = PERIOD_MAP.get(period, "1y")
-    normalized = [s.upper().strip() for s in symbols if s.strip()][:5]
+    normalized = [s for s in symbols if s.strip()][:5]
     raw = yf.download(
         normalized,
         period=period_key,
@@ -265,17 +266,35 @@ def _with_fallback(primary, fallback, *args, **kwargs):
 
 
 def search_symbols(query: str, limit: int = 10) -> list[dict[str, str]]:
+    hk_results = search_hk_catalog(query, limit=limit)
     source = active_source()
     if source == "demo":
         results = demo.search_symbols(query, limit)
-        return results or _yahoo_search(query, limit)
+        merged = _merge_search_results(hk_results, results)
+        return merged or _yahoo_search(query, limit) or hk_results
     if source == "finnhub":
-        return _with_fallback(finnhub.search_symbols, demo.search_symbols, query, limit)
+        live = _with_fallback(finnhub.search_symbols, demo.search_symbols, query, limit)
+        return _merge_search_results(hk_results, live)
     results = _yahoo_search(query, limit)
-    return results or demo.search_symbols(query, limit)
+    merged = _merge_search_results(hk_results, results)
+    return merged or demo.search_symbols(query, limit) or hk_results
+
+
+def _merge_search_results(*groups: list[dict[str, str]]) -> list[dict[str, str]]:
+    merged: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for group in groups:
+        for item in group:
+            symbol = item.get("symbol", "").upper()
+            if not symbol or symbol in seen:
+                continue
+            seen.add(symbol)
+            merged.append(item)
+    return merged
 
 
 def get_quote(symbol: str) -> dict[str, Any]:
+    symbol = normalize_symbol(symbol)
     source = active_source()
     if source == "demo":
         return demo.get_quote(symbol)
@@ -285,6 +304,7 @@ def get_quote(symbol: str) -> dict[str, Any]:
 
 
 def get_fundamentals(symbol: str) -> dict[str, Any]:
+    symbol = normalize_symbol(symbol)
     source = active_source()
     if source == "demo":
         return demo.get_fundamentals(symbol)
@@ -297,6 +317,7 @@ def get_fundamentals(symbol: str) -> dict[str, Any]:
 
 
 def get_history(symbol: str, period: str = "1y") -> dict[str, Any]:
+    symbol = normalize_symbol(symbol)
     source = active_source()
     if source == "demo":
         return demo.get_history(symbol, period)
@@ -309,6 +330,7 @@ def get_history(symbol: str, period: str = "1y") -> dict[str, Any]:
 
 
 def compare_symbols(symbols: list[str], period: str = "1y") -> dict[str, Any]:
+    symbols = [normalize_symbol(s) for s in symbols if s.strip()]
     source = active_source()
     if source == "demo":
         return demo.compare_symbols(symbols, period)

@@ -3,7 +3,8 @@
   "name": "JPMorgan Chase & Co.",
   "currency": "USD",
   "sector": "Financial Services",
-  "industry": "Internet Content & Information",
+  "industry": "Banks",
+  "market": "US",
   "history": [
     {
       "date": "2025-07-15",
