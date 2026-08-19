@@ -62,5 +62,13 @@
   "2318.HK": {
     "name": "Ping An Insurance",
     "file": "2318.HK.json"
+  },
+  "2388.HK": {
+    "name": "BOC Hong Kong (Holdings)",
+    "file": "2388.HK.json"
+  },
+  "0011.HK": {
+    "name": "Hang Seng Bank",
+    "file": "0011.HK.json"
   }
 }

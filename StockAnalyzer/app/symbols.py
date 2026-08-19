@@ -13,6 +13,8 @@ HK_POPULAR = [
     {"symbol": "9618.HK", "name": "JD.com", "code": "9618"},
     {"symbol": "0941.HK", "name": "China Mobile", "code": "0941"},
     {"symbol": "2318.HK", "name": "Ping An Insurance", "code": "2318"},
+    {"symbol": "2388.HK", "name": "BOC Hong Kong (Holdings)", "code": "2388"},
+    {"symbol": "0011.HK", "name": "Hang Seng Bank", "code": "0011"},
 ]
 
 US_POPULAR = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "JPM"]

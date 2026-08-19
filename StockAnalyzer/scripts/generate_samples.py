@@ -25,6 +25,8 @@ SAMPLES = {
     "9618.HK": {"start": 130.0, "drift": 0.0004, "vol": 0.023, "name": "JD.com", "currency": "HKD", "sector": "Consumer Cyclical", "industry": "Internet Retail"},
     "0941.HK": {"start": 72.0, "drift": 0.0003, "vol": 0.011, "name": "China Mobile", "currency": "HKD", "sector": "Communication Services", "industry": "Telecom Services"},
     "2318.HK": {"start": 42.0, "drift": 0.0004, "vol": 0.015, "name": "Ping An Insurance", "currency": "HKD", "sector": "Financial Services", "industry": "Insurance"},
+    "2388.HK": {"start": 28.0, "drift": 0.0003, "vol": 0.014, "name": "BOC Hong Kong (Holdings)", "currency": "HKD", "sector": "Financial Services", "industry": "Banks"},
+    "0011.HK": {"start": 145.0, "drift": 0.00035, "vol": 0.013, "name": "Hang Seng Bank", "currency": "HKD", "sector": "Financial Services", "industry": "Banks"},
 }
 
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "data" / "samples"
