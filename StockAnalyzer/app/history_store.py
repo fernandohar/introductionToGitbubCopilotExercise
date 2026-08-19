@@ -63,12 +63,12 @@ def get_universe(market: str) -> list[str]:
     return [item["symbol"] for item in HK_POPULAR] + US_POPULAR
 
 
-def get_available_date_range(market: str) -> dict[str, Any]:
-    symbols = get_universe(market)
+def get_available_date_range(market: str, symbols: list[str] | None = None) -> dict[str, Any]:
+    symbol_list = symbols or get_universe(market)
     min_date = None
     max_date = None
 
-    for symbol in symbols:
+    for symbol in symbol_list:
         frame = get_ohlcv(symbol)
         if frame is None or frame.empty:
             continue

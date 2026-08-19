@@ -768,3 +768,66 @@ button:hover {
   font-family: "JetBrains Mono", monospace;
   font-weight: 600;
 }
+
+.mock-section {
+  margin-bottom: 14px;
+}
+
+.mock-section > label {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.mock-list-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.mock-list-actions select {
+  flex: 1;
+  min-width: 140px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 8px 10px;
+}
+
+.checkbox-row {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 10px;
+  color: var(--text) !important;
+}
+
+.checkbox-row input {
+  width: auto;
+}
+
+.comparison-banner {
+  margin-bottom: 16px;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.comparison-grid span {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.comparison-grid strong {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1rem;
+}

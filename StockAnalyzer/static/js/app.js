@@ -1,6 +1,7 @@
 const POPULAR_US = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "JPM"];
 const POPULAR_HK = ["0700.HK", "9988.HK", "0005.HK", "3690.HK", "1810.HK", "9618.HK", "0941.HK", "2318.HK"];
 const WATCHLIST_KEY = "stockAnalyzerWatchlist";
+const MOCK_LISTS_KEY = "mockMarketLists";
 
 const state = {
   symbol: null,
@@ -652,8 +653,12 @@ function setupViewNav() {
 
 async function loadMockDateRange() {
   const market = $("mockMarket").value;
+  const universe = $("mockUniverse").value.trim();
+  const params = new URLSearchParams({ market });
+  if (universe) params.set("symbols", universe);
+
   try {
-    const range = await api(`/api/backtest/range?market=${encodeURIComponent(market)}`);
+    const range = await api(`/api/backtest/range?${params.toString()}`);
     const input = $("mockDate");
     if (range.earliest_entry && range.latest_entry) {
       input.min = range.earliest_entry;
@@ -666,29 +671,106 @@ async function loadMockDateRange() {
   }
 }
 
+function getMockLists() {
+  try {
+    return JSON.parse(localStorage.getItem(MOCK_LISTS_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveMockLists(lists) {
+  localStorage.setItem(MOCK_LISTS_KEY, JSON.stringify(lists));
+}
+
+function renderMockListPresets() {
+  const select = $("mockSavedLists");
+  const lists = getMockLists();
+  select.innerHTML = `<option value="">Saved lists...</option>`;
+  Object.keys(lists).forEach((name) => {
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = name;
+    select.appendChild(option);
+  });
+}
+
+function renderPortfolioTable(tableId, rows, includeScore = true) {
+  const tbody = $(tableId).querySelector("tbody");
+  tbody.innerHTML = (rows || [])
+    .map(
+      (row) => `
+      <tr>
+        <td><strong>${row.symbol}</strong><div class="sub">${row.name || ""}</div></td>
+        <td>${formatPercent(row.weight * 100)}</td>
+        ${includeScore ? `<td>${formatNumber(row.score_at_entry, 2)}</td>` : ""}
+        <td>${formatNumber(row.entry_price)}</td>
+        <td>${formatNumber(row.exit_price)}</td>
+        <td class="${row.return_pct >= 0 ? "positive" : "negative"}">${formatPercent(row.return_pct)}</td>
+        <td class="${row.profit >= 0 ? "positive" : "negative"}">${formatNumber(row.profit, 0)}</td>
+      </tr>
+    `
+    )
+    .join("");
+}
+
 function renderMockResults(result) {
+  const isCompare = result.mode === "compare";
   const summary = result.summary || {};
   const madeMoney = summary.made_money;
+
   $("mockSummary").innerHTML = `
     <div class="trend-card ${madeMoney ? "positive" : "negative"}">
-      <div class="trend-label">${madeMoney ? "PROFIT" : "LOSS"} ON BACKTEST</div>
+      <div class="trend-label">${isCompare ? "SYSTEM SUGGESTION" : madeMoney ? "PROFIT" : "LOSS"}</div>
       <div class="trend-score">${formatPercent(summary.total_return_pct)}</div>
-      <p>${madeMoney ? "The suggested portfolio would have made money over this period." : "The suggested portfolio would have lost money over this period."}</p>
+      <p>${
+        isCompare
+          ? "Comparing the system's suggested portfolio against your manual picks."
+          : madeMoney
+            ? "The suggested portfolio would have made money over this period."
+            : "The suggested portfolio would have lost money over this period."
+      }</p>
       <div class="trend-meta">
-        ${result.entry_date} → ${result.exit_date} · ${result.market} · ${result.currency}
-        · ${summary.beat_benchmark ? "Beat benchmark" : "Underperformed benchmark"}
+        ${result.entry_date} → ${result.exit_date} · Top ${result.top_n} · ${result.currency}
       </div>
     </div>
   `;
 
-  $("mockMetrics").innerHTML = [
+  if (isCompare && result.comparison) {
+    const cmp = result.comparison;
+    $("mockComparison").classList.remove("hidden");
+    $("mockComparison").innerHTML = `
+      <div class="trend-card neutral">
+        <div class="trend-label">HEAD-TO-HEAD</div>
+        <p><strong>${cmp.winner_label}</strong> wins with ${formatPercent(cmp[`${cmp.winner}_return_pct`] ?? cmp.benchmark_return_pct)}</p>
+        <div class="comparison-grid">
+          <div><span>System</span><strong class="${cmp.auto_return_pct >= 0 ? "positive" : "negative"}">${formatPercent(cmp.auto_return_pct)}</strong></div>
+          <div><span>Your picks</span><strong class="${cmp.manual_return_pct >= 0 ? "positive" : "negative"}">${formatPercent(cmp.manual_return_pct)}</strong></div>
+          <div><span>Benchmark</span><strong>${formatPercent(cmp.benchmark_return_pct)}</strong></div>
+        </div>
+      </div>
+    `;
+  } else {
+    $("mockComparison").classList.add("hidden");
+  }
+
+  const metrics = [
     { label: "Starting capital", value: formatNumber(result.initial_capital, 0) },
-    { label: "Final value", value: formatNumber(summary.final_value, 0) },
-    { label: "Profit / Loss", value: formatNumber(summary.total_profit, 0) },
+    { label: "System final value", value: formatNumber(summary.final_value, 0) },
+    { label: "System profit / loss", value: formatNumber(summary.total_profit, 0) },
     { label: "Benchmark return", value: formatPercent(summary.benchmark_return_pct) },
-    { label: "Alpha", value: formatPercent(summary.alpha_pct) },
+    { label: "System alpha", value: formatPercent(summary.alpha_pct) },
     { label: "Winners / Losers", value: `${summary.winning_positions} / ${summary.losing_positions}` },
-  ]
+  ];
+
+  if (isCompare && result.manual?.summary) {
+    metrics.push(
+      { label: "Manual final value", value: formatNumber(result.manual.summary.final_value, 0) },
+      { label: "Manual profit / loss", value: formatNumber(result.manual.summary.total_profit, 0) }
+    );
+  }
+
+  $("mockMetrics").innerHTML = metrics
     .map(
       (item) => `
       <div class="metric-card">
@@ -699,25 +781,24 @@ function renderMockResults(result) {
     )
     .join("");
 
-  const tbody = $("mockPortfolioTable").querySelector("tbody");
-  tbody.innerHTML = (result.portfolio || [])
-    .map(
-      (row) => `
-      <tr>
-        <td><strong>${row.symbol}</strong><div class="sub">${row.name || ""}</div></td>
-        <td>${formatPercent(row.weight * 100)}</td>
-        <td>${formatNumber(row.entry_price)}</td>
-        <td>${formatNumber(row.exit_price)}</td>
-        <td class="${row.return_pct >= 0 ? "positive" : "negative"}">${formatPercent(row.return_pct)}</td>
-        <td class="${row.profit >= 0 ? "positive" : "negative"}">${formatNumber(row.profit, 0)}</td>
-      </tr>
-    `
-    )
-    .join("");
+  $("mockChartTitle").textContent = isCompare
+    ? "System vs your picks vs benchmark"
+    : "Suggested portfolio vs benchmark";
+  $("mockPortfolioTitle").textContent = `System suggested portfolio (top ${result.top_n})`;
+  renderPortfolioTable("mockPortfolioTable", result.portfolio, true);
+
+  if (isCompare && result.manual?.portfolio) {
+    $("mockManualSection").classList.remove("hidden");
+    renderPortfolioTable("mockManualTable", result.manual.portfolio, false);
+  } else {
+    $("mockManualSection").classList.add("hidden");
+  }
 
   $("mockMethodology").innerHTML = `
     <h3>How this works</h3>
+    <p><strong>Universe:</strong> ${(result.universe || []).join(", ")}</p>
     <p><strong>Selection:</strong> ${result.methodology?.selection || ""}</p>
+    <p><strong>Manual:</strong> ${result.methodology?.manual || "Not used"}</p>
     <p><strong>Execution:</strong> ${result.methodology?.execution || ""}</p>
     <p><strong>Benchmark:</strong> ${result.methodology?.benchmark || ""}</p>
   `;
@@ -732,34 +813,44 @@ function renderMockChart(result) {
   }
 
   chartDefaults();
-  const portfolio = result.equity_curve?.portfolio || [];
-  const benchmark = result.equity_curve?.benchmark || [];
+  const curves = result.equity_curve || {};
+  const datasets = [
+    {
+      label: result.mode === "compare" ? "System suggestion" : "Suggested portfolio",
+      data: (curves.portfolio || []).map((p) => ({ x: p.date, y: p.value })),
+      borderColor: "#3b82f6",
+      backgroundColor: "transparent",
+      borderWidth: 2,
+      pointRadius: 0,
+      tension: 0.15,
+    },
+    {
+      label: result.benchmark?.label || "Benchmark",
+      data: (curves.benchmark || []).map((p) => ({ x: p.date, y: p.value })),
+      borderColor: "#eab308",
+      backgroundColor: "transparent",
+      borderWidth: 2,
+      pointRadius: 0,
+      tension: 0.15,
+    },
+  ];
+
+  if (result.mode === "compare" && curves.manual) {
+    datasets.splice(1, 0, {
+      label: "Your manual picks",
+      data: curves.manual.map((p) => ({ x: p.date, y: p.value })),
+      borderColor: "#22c55e",
+      backgroundColor: "transparent",
+      borderWidth: 2,
+      pointRadius: 0,
+      tension: 0.15,
+    });
+  }
 
   const ctx = $("mockChart").getContext("2d");
   state.charts.mock = new Chart(ctx, {
     type: "line",
-    data: {
-      datasets: [
-        {
-          label: "Suggested portfolio",
-          data: portfolio.map((p) => ({ x: p.date, y: p.value })),
-          borderColor: "#3b82f6",
-          backgroundColor: "transparent",
-          borderWidth: 2,
-          pointRadius: 0,
-          tension: 0.15,
-        },
-        {
-          label: result.benchmark?.label || "Benchmark",
-          data: benchmark.map((p) => ({ x: p.date, y: p.value })),
-          borderColor: "#eab308",
-          backgroundColor: "transparent",
-          borderWidth: 2,
-          pointRadius: 0,
-          tension: 0.15,
-        },
-      ],
-    },
+    data: { datasets },
     options: {
       responsive: true,
       parsing: false,
@@ -773,8 +864,43 @@ function renderMockChart(result) {
 }
 
 function setupMockMarket() {
+  renderMockListPresets();
   loadMockDateRange();
-  $("mockMarket").addEventListener("change", loadMockDateRange);
+
+  $("mockMarket").addEventListener("change", () => {
+    if (!$("mockUniverse").value.trim()) loadMockDateRange();
+  });
+  $("mockUniverse").addEventListener("change", loadMockDateRange);
+  $("mockUniverse").addEventListener("blur", loadMockDateRange);
+
+  $("mockCompareManual").addEventListener("change", () => {
+    $("mockManual").classList.toggle("hidden", !$("mockCompareManual").checked);
+  });
+
+  $("mockLoadList").addEventListener("click", () => {
+    const name = $("mockSavedLists").value;
+    if (!name) return;
+    const lists = getMockLists();
+    if (lists[name]) {
+      $("mockUniverse").value = lists[name].join(", ");
+      loadMockDateRange();
+    }
+  });
+
+  $("mockSaveList").addEventListener("click", () => {
+    const raw = $("mockUniverse").value.trim();
+    if (!raw) {
+      alert("Enter symbols to save first");
+      return;
+    }
+    const name = prompt("Name this stock list:");
+    if (!name) return;
+    const lists = getMockLists();
+    lists[name] = raw.split(",").map((s) => s.trim()).filter(Boolean);
+    saveMockLists(lists);
+    renderMockListPresets();
+    $("mockSavedLists").value = name;
+  });
 
   $("mockForm").addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -785,7 +911,22 @@ function setupMockMarket() {
         market: $("mockMarket").value,
         hold_period: $("mockHold").value,
         capital: $("mockCapital").value,
+        top_n: $("mockTopN").value,
       });
+
+      const universe = $("mockUniverse").value.trim();
+      if (universe) params.set("symbols", universe);
+
+      if ($("mockCompareManual").checked) {
+        const manual = $("mockManual").value.trim();
+        if (!manual) {
+          alert("Enter your manual picks to compare");
+          setLoading(false);
+          return;
+        }
+        params.set("manual_symbols", manual);
+      }
+
       const result = await api(`/api/backtest?${params.toString()}`);
       renderMockResults(result);
       closeSidebar();

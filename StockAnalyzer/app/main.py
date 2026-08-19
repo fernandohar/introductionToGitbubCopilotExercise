@@ -104,10 +104,15 @@ def compare(symbols: str = Query(...), period: str = Query("1y")) -> dict:
 
 
 @app.get("/api/backtest/range")
-def backtest_range(market: str = Query("hk")) -> dict:
-    from app.history_store import get_available_date_range
+def backtest_range(
+    market: str = Query("hk"),
+    symbols: str | None = Query(None, description="Comma-separated custom universe"),
+) -> dict:
+    from app.backtest import parse_symbol_list
+    from app.history_store import get_available_date_range, get_universe
 
-    return get_available_date_range(market)
+    universe = parse_symbol_list(symbols) or get_universe(market)
+    return get_available_date_range(market, symbols=universe)
 
 
 @app.get("/api/backtest")
@@ -117,8 +122,10 @@ def backtest(
     hold_period: str = Query("3mo"),
     capital: float = Query(100_000.0, ge=1000, le=10_000_000),
     top_n: int = Query(4, ge=1, le=8),
+    symbols: str | None = Query(None, description="Custom comma-separated scoring universe"),
+    manual_symbols: str | None = Query(None, description="Your manual picks to compare"),
 ) -> dict:
-    from app.backtest import run_mock_backtest
+    from app.backtest import parse_symbol_list, run_mock_backtest
 
     try:
         return run_mock_backtest(
@@ -127,6 +134,8 @@ def backtest(
             hold_period=hold_period,
             capital=capital,
             top_n=top_n,
+            universe_symbols=parse_symbol_list(symbols) or None,
+            manual_symbols=parse_symbol_list(manual_symbols) or None,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

@@ -9,6 +9,7 @@ A mobile-friendly web app for analyzing **Hong Kong (HKEX)** and US stocks with 
 - **Buy/sell behavior** — Volume ratio, 5-day momentum, and close-position buy pressure
 - **Technical analysis** — RSI, MACD, Bollinger Bands, moving averages
 - **Fundamentals & compare** — Key ratios and normalized performance charts
+- **Mock Market backtest** — Pick a past date, get a portfolio, test if it would have made money
 - **Mobile-ready UI** — Works in phone browsers with collapsible sidebar
 
 ## Quick start (local)
@@ -56,11 +57,23 @@ Open that URL on your phone — no install required.
 ## Mock Market backtest
 
 1. Open **Mock Market** in the sidebar
-2. Pick an entry date, market (HK/US), and hold period
-3. The system scores each stock using **only data available on that date** (no look-ahead)
-4. It builds a portfolio from the top signals and simulates forward returns vs an equal-weight benchmark
+2. Pick an entry date, market preset, **portfolio size** (top 2–8 stocks), and hold period
+3. Optional: enter a **custom stock list** for the scoring universe (save/load lists in your browser)
+4. Optional: enable **Compare with my manual picks** to test your own equal-weight portfolio head-to-head
+5. The system scores each stock using **only data available on that date** (no look-ahead)
+6. It builds a portfolio from the top signals and simulates forward returns vs an equal-weight benchmark
 
 Supported hold periods: `1mo`, `3mo`, `6mo`, `1y`.
+
+### API examples
+
+```bash
+# Custom universe + top 5 picks
+curl "http://localhost:8000/api/backtest?date=2025-11-01&market=hk&top_n=5&symbols=0700.HK,9988.HK,0005.HK,3690.HK"
+
+# Compare system suggestion vs manual picks
+curl "http://localhost:8000/api/backtest?date=2025-11-01&market=hk&manual_symbols=0700.HK,1810.HK"
+```
 
 ## Trend scoring
 

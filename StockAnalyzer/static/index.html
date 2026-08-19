@@ -168,11 +168,22 @@
               <span class="hint" id="mockDateHint"></span>
             </label>
             <label>
-              Market
+              Market preset
               <select id="mockMarket">
                 <option value="hk">Hong Kong (HKEX)</option>
                 <option value="us">United States</option>
                 <option value="all">HK + US</option>
+              </select>
+            </label>
+            <label>
+              Portfolio size
+              <select id="mockTopN">
+                <option value="2">Top 2 stocks</option>
+                <option value="3">Top 3 stocks</option>
+                <option value="4" selected>Top 4 stocks</option>
+                <option value="5">Top 5 stocks</option>
+                <option value="6">Top 6 stocks</option>
+                <option value="8">Top 8 stocks</option>
               </select>
             </label>
             <label>
@@ -189,20 +200,59 @@
               <input id="mockCapital" type="number" min="1000" step="1000" value="100000" />
             </label>
           </div>
+
+          <div class="mock-section">
+            <label for="mockUniverse">Custom stock list (scoring universe)</label>
+            <input id="mockUniverse" type="text" placeholder="0700.HK, 9988.HK, 0005.HK — leave blank for market preset" />
+            <div class="mock-list-actions">
+              <select id="mockSavedLists"></select>
+              <button type="button" class="ghost-btn" id="mockLoadList">Load</button>
+              <button type="button" class="ghost-btn" id="mockSaveList">Save as...</button>
+            </div>
+          </div>
+
+          <div class="mock-section">
+            <label class="checkbox-row">
+              <input id="mockCompareManual" type="checkbox" />
+              Compare with my manual picks
+            </label>
+            <input id="mockManual" type="text" placeholder="0700.HK, 1810.HK, 3690.HK" class="hidden" />
+          </div>
+
           <button type="submit">Run Backtest</button>
         </form>
 
         <div class="hidden" id="mockResults">
           <div class="trend-hero" id="mockSummary"></div>
+          <div class="comparison-banner hidden" id="mockComparison"></div>
           <div class="metrics" id="mockMetrics"></div>
           <div class="chart-card">
-            <h3>Portfolio vs benchmark</h3>
+            <h3 id="mockChartTitle">Portfolio vs benchmark</h3>
             <canvas id="mockChart"></canvas>
           </div>
           <div class="chart-card">
-            <h3>Suggested portfolio</h3>
+            <h3 id="mockPortfolioTitle">Suggested portfolio</h3>
             <div class="portfolio-table-wrap">
               <table class="portfolio-table" id="mockPortfolioTable">
+                <thead>
+                  <tr>
+                    <th>Symbol</th>
+                    <th>Weight</th>
+                    <th>Score</th>
+                    <th>Entry</th>
+                    <th>Exit</th>
+                    <th>Return</th>
+                    <th>P/L</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="chart-card hidden" id="mockManualSection">
+            <h3>Your manual picks</h3>
+            <div class="portfolio-table-wrap">
+              <table class="portfolio-table" id="mockManualTable">
                 <thead>
                   <tr>
                     <th>Symbol</th>
