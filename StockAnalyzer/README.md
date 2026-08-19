@@ -50,6 +50,17 @@ Open that URL on your phone — no install required.
 | `GET /api/history/{symbol}?period=1y` | OHLCV + indicators |
 | `GET /api/fundamentals/{symbol}` | Company fundamentals |
 | `GET /api/compare?symbols=0700.HK,9988.HK` | Normalized comparison |
+| `GET /api/backtest/range?market=hk` | Valid historical date range |
+| `GET /api/backtest?date=2025-11-01&market=hk&hold_period=3mo` | Mock market backtest |
+
+## Mock Market backtest
+
+1. Open **Mock Market** in the sidebar
+2. Pick an entry date, market (HK/US), and hold period
+3. The system scores each stock using **only data available on that date** (no look-ahead)
+4. It builds a portfolio from the top signals and simulates forward returns vs an equal-weight benchmark
+
+Supported hold periods: `1mo`, `3mo`, `6mo`, `1y`.
 
 ## Trend scoring
 

@@ -630,8 +630,169 @@ document.addEventListener("DOMContentLoaded", () => {
   setupPeriodTabs();
   setupWatchlist();
   setupCompare();
+  setupViewNav();
+  setupMockMarket();
 
   $("menuToggle")?.addEventListener("click", () => {
     $("sidebar").classList.toggle("open");
   });
 });
+
+function setupViewNav() {
+  document.querySelectorAll(".nav-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const view = btn.dataset.view;
+      document.querySelectorAll(".nav-btn").forEach((el) => el.classList.toggle("active", el === btn));
+      $("analyzeView").classList.toggle("hidden", view !== "analyze");
+      $("mockMarketView").classList.toggle("hidden", view !== "mock");
+      closeSidebar();
+    });
+  });
+}
+
+async function loadMockDateRange() {
+  const market = $("mockMarket").value;
+  try {
+    const range = await api(`/api/backtest/range?market=${encodeURIComponent(market)}`);
+    const input = $("mockDate");
+    if (range.earliest_entry && range.latest_entry) {
+      input.min = range.earliest_entry;
+      input.max = range.latest_entry;
+      input.value = range.latest_entry;
+      $("mockDateHint").textContent = `Available: ${range.earliest_entry} to ${range.latest_entry}`;
+    }
+  } catch {
+    $("mockDateHint").textContent = "Using bundled historical sample data";
+  }
+}
+
+function renderMockResults(result) {
+  const summary = result.summary || {};
+  const madeMoney = summary.made_money;
+  $("mockSummary").innerHTML = `
+    <div class="trend-card ${madeMoney ? "positive" : "negative"}">
+      <div class="trend-label">${madeMoney ? "PROFIT" : "LOSS"} ON BACKTEST</div>
+      <div class="trend-score">${formatPercent(summary.total_return_pct)}</div>
+      <p>${madeMoney ? "The suggested portfolio would have made money over this period." : "The suggested portfolio would have lost money over this period."}</p>
+      <div class="trend-meta">
+        ${result.entry_date} → ${result.exit_date} · ${result.market} · ${result.currency}
+        · ${summary.beat_benchmark ? "Beat benchmark" : "Underperformed benchmark"}
+      </div>
+    </div>
+  `;
+
+  $("mockMetrics").innerHTML = [
+    { label: "Starting capital", value: formatNumber(result.initial_capital, 0) },
+    { label: "Final value", value: formatNumber(summary.final_value, 0) },
+    { label: "Profit / Loss", value: formatNumber(summary.total_profit, 0) },
+    { label: "Benchmark return", value: formatPercent(summary.benchmark_return_pct) },
+    { label: "Alpha", value: formatPercent(summary.alpha_pct) },
+    { label: "Winners / Losers", value: `${summary.winning_positions} / ${summary.losing_positions}` },
+  ]
+    .map(
+      (item) => `
+      <div class="metric-card">
+        <div class="label">${item.label}</div>
+        <div class="value">${item.value}</div>
+      </div>
+    `
+    )
+    .join("");
+
+  const tbody = $("mockPortfolioTable").querySelector("tbody");
+  tbody.innerHTML = (result.portfolio || [])
+    .map(
+      (row) => `
+      <tr>
+        <td><strong>${row.symbol}</strong><div class="sub">${row.name || ""}</div></td>
+        <td>${formatPercent(row.weight * 100)}</td>
+        <td>${formatNumber(row.entry_price)}</td>
+        <td>${formatNumber(row.exit_price)}</td>
+        <td class="${row.return_pct >= 0 ? "positive" : "negative"}">${formatPercent(row.return_pct)}</td>
+        <td class="${row.profit >= 0 ? "positive" : "negative"}">${formatNumber(row.profit, 0)}</td>
+      </tr>
+    `
+    )
+    .join("");
+
+  $("mockMethodology").innerHTML = `
+    <h3>How this works</h3>
+    <p><strong>Selection:</strong> ${result.methodology?.selection || ""}</p>
+    <p><strong>Execution:</strong> ${result.methodology?.execution || ""}</p>
+    <p><strong>Benchmark:</strong> ${result.methodology?.benchmark || ""}</p>
+  `;
+
+  renderMockChart(result);
+  $("mockResults").classList.remove("hidden");
+}
+
+function renderMockChart(result) {
+  if (state.charts.mock) {
+    state.charts.mock.destroy();
+  }
+
+  chartDefaults();
+  const portfolio = result.equity_curve?.portfolio || [];
+  const benchmark = result.equity_curve?.benchmark || [];
+
+  const ctx = $("mockChart").getContext("2d");
+  state.charts.mock = new Chart(ctx, {
+    type: "line",
+    data: {
+      datasets: [
+        {
+          label: "Suggested portfolio",
+          data: portfolio.map((p) => ({ x: p.date, y: p.value })),
+          borderColor: "#3b82f6",
+          backgroundColor: "transparent",
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.15,
+        },
+        {
+          label: result.benchmark?.label || "Benchmark",
+          data: benchmark.map((p) => ({ x: p.date, y: p.value })),
+          borderColor: "#eab308",
+          backgroundColor: "transparent",
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.15,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      parsing: false,
+      plugins: { legend: { position: "bottom" } },
+      scales: {
+        x: { type: "time", time: { unit: "month" }, ticks: { maxTicksLimit: 8 } },
+        y: { ticks: { callback: (v) => formatNumber(v, 0) } },
+      },
+    },
+  });
+}
+
+function setupMockMarket() {
+  loadMockDateRange();
+  $("mockMarket").addEventListener("change", loadMockDateRange);
+
+  $("mockForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        date: $("mockDate").value,
+        market: $("mockMarket").value,
+        hold_period: $("mockHold").value,
+        capital: $("mockCapital").value,
+      });
+      const result = await api(`/api/backtest?${params.toString()}`);
+      renderMockResults(result);
+      closeSidebar();
+    } catch (error) {
+      alert(error.message || "Backtest failed");
+    } finally {
+      setLoading(false);
+    }
+  });
+}

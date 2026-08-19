@@ -26,11 +26,16 @@ PERIOD_DAYS = {
 
 
 @lru_cache(maxsize=32)
-def _load_symbol_file(symbol: str) -> dict[str, Any] | None:
+def load_symbol_payload(symbol: str) -> dict[str, Any] | None:
     path = SAMPLES_DIR / f"{symbol.upper()}.json"
     if not path.exists():
         return None
     return json.loads(path.read_text())
+
+
+@lru_cache(maxsize=32)
+def _load_symbol_file(symbol: str) -> dict[str, Any] | None:
+    return load_symbol_payload(symbol)
 
 
 @lru_cache(maxsize=1)
@@ -81,6 +86,13 @@ def _rows_to_frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
         }
     )
     return df[["Open", "High", "Low", "Close", "Volume"]]
+
+
+def get_ohlcv_frame(symbol: str) -> pd.DataFrame | None:
+    payload = _load_symbol_file(symbol)
+    if not payload:
+        return None
+    return _rows_to_frame(payload["history"])
 
 
 def _slice_period(df: pd.DataFrame, period: str) -> pd.DataFrame:

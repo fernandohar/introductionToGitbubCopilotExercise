@@ -103,6 +103,37 @@ def compare(symbols: str = Query(...), period: str = Query("1y")) -> dict:
         raise HTTPException(status_code=400, detail="Unable to compare symbols") from exc
 
 
+@app.get("/api/backtest/range")
+def backtest_range(market: str = Query("hk")) -> dict:
+    from app.history_store import get_available_date_range
+
+    return get_available_date_range(market)
+
+
+@app.get("/api/backtest")
+def backtest(
+    date: str = Query(..., description="Historical date YYYY-MM-DD"),
+    market: str = Query("hk"),
+    hold_period: str = Query("3mo"),
+    capital: float = Query(100_000.0, ge=1000, le=10_000_000),
+    top_n: int = Query(4, ge=1, le=8),
+) -> dict:
+    from app.backtest import run_mock_backtest
+
+    try:
+        return run_mock_backtest(
+            as_of_date=date,
+            market=market,
+            hold_period=hold_period,
+            capital=capital,
+            top_n=top_n,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Backtest failed") from exc
+
+
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
