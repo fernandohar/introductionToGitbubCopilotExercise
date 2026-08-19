@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stock Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">📈</div>
+        <div>
+          <h1>Stock Analyzer</h1>
+          <p>Technical & fundamental insights</p>
+        </div>
+      </div>
+
+      <form class="search-form" id="searchForm">
+        <label for="searchInput">Search ticker or company</label>
+        <div class="search-row">
+          <input id="searchInput" type="text" placeholder="AAPL, MSFT, TSLA..." autocomplete="off" />
+          <button type="submit">Search</button>
+        </div>
+      </form>
+
+      <div class="search-results hidden" id="searchResults"></div>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Watchlist</h2>
+          <button class="ghost-btn" id="clearWatchlist" type="button">Clear</button>
+        </div>
+        <ul class="watchlist" id="watchlist"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>Popular</h2>
+        <div class="chip-row" id="popularChips"></div>
+      </section>
+    </aside>
+
+    <main class="content">
+      <header class="hero" id="hero">
+        <div class="hero-empty">
+          <h2>Analyze any stock</h2>
+          <p>Search a ticker to view price charts, technical indicators, fundamentals, and trading signals.</p>
+        </div>
+      </header>
+
+      <section class="controls hidden" id="controls">
+        <div class="period-tabs" id="periodTabs">
+          <button data-period="1mo">1M</button>
+          <button data-period="3mo">3M</button>
+          <button data-period="6mo">6M</button>
+          <button data-period="1y" class="active">1Y</button>
+          <button data-period="2y">2Y</button>
+          <button data-period="5y">5Y</button>
+        </div>
+        <button class="ghost-btn" id="addWatchlistBtn" type="button">+ Watchlist</button>
+      </section>
+
+      <section class="metrics hidden" id="metrics"></section>
+
+      <section class="tabs hidden" id="tabBar">
+        <button class="tab active" data-tab="overview">Overview</button>
+        <button class="tab" data-tab="technical">Technical</button>
+        <button class="tab" data-tab="fundamentals">Fundamentals</button>
+        <button class="tab" data-tab="compare">Compare</button>
+      </section>
+
+      <section class="tab-panel hidden" id="overviewPanel">
+        <div class="chart-card">
+          <h3>Price & Moving Averages</h3>
+          <canvas id="priceChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Volume</h3>
+          <canvas id="volumeChart"></canvas>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="technicalPanel">
+        <div class="signal-banner" id="signalBanner"></div>
+        <div class="chart-grid">
+          <div class="chart-card">
+            <h3>RSI (14)</h3>
+            <canvas id="rsiChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3>MACD</h3>
+            <canvas id="macdChart"></canvas>
+          </div>
+          <div class="chart-card wide">
+            <h3>Bollinger Bands</h3>
+            <canvas id="bbChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="fundamentalsPanel">
+        <div class="fundamentals-grid" id="fundamentalsGrid"></div>
+        <div class="description-card hidden" id="descriptionCard">
+          <h3>About</h3>
+          <p id="companyDescription"></p>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="comparePanel">
+        <form class="compare-form" id="compareForm">
+          <label for="compareInput">Compare symbols (comma-separated)</label>
+          <div class="search-row">
+            <input id="compareInput" type="text" placeholder="AAPL, MSFT, GOOGL" />
+            <button type="submit">Compare</button>
+          </div>
+        </form>
+        <div class="chart-card">
+          <h3>Normalized Performance (% change from period start)</h3>
+          <canvas id="compareChart"></canvas>
+        </div>
+      </section>
+
+      <div class="loading hidden" id="loading">
+        <div class="spinner"></div>
+        <span>Loading market data...</span>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
