@@ -633,6 +633,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupCompare();
   setupViewNav();
   setupMockMarket();
+  setupValidation();
 
   $("menuToggle")?.addEventListener("click", () => {
     $("sidebar").classList.toggle("open");
@@ -861,6 +862,48 @@ function renderMockChart(result) {
       },
     },
   });
+}
+
+function setupValidation() {
+  $("runValidationBtn").addEventListener("click", async () => {
+    const symbol = $("validateSymbol").value.trim();
+    if (!symbol) return;
+    setLoading(true);
+    try {
+      const result = await fetch(`/api/validate/run?symbol=${encodeURIComponent(symbol)}&adapt=true`, {
+        method: "POST",
+      }).then(async (r) => {
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.detail || "Validation failed");
+        }
+        return r.json();
+      });
+      renderValidationResults(result);
+    } catch (error) {
+      alert(error.message || "Validation failed");
+    } finally {
+      setLoading(false);
+    }
+  });
+}
+
+function renderValidationResults(result) {
+  const container = $("validationResults");
+  container.classList.remove("hidden");
+  container.innerHTML = `
+    <div class="trend-card neutral">
+      <div class="trend-label">HISTORIC VALIDATION · ${result.symbol}</div>
+      <div class="trend-score">${formatNumber(result.accuracy_pct, 1)}% accurate</div>
+      <p>${result.years_covered} years · ${result.steps_evaluated} test points · news proxy accuracy ${formatNumber(result.news_accuracy_pct, 1)}%</p>
+      <div class="comparison-grid">
+        <div><span>Technical weight</span><strong>${formatPercent(result.final_weights.technical * 100)}</strong></div>
+        <div><span>News weight</span><strong>${formatPercent(result.final_weights.news * 100)}</strong></div>
+        <div><span>Behavior weight</span><strong>${formatPercent(result.final_weights.behavior * 100)}</strong></div>
+      </div>
+      <p class="hint" style="margin-top:12px">${result.methodology?.news_note || ""}</p>
+    </div>
+  `;
 }
 
 function setupMockMarket() {

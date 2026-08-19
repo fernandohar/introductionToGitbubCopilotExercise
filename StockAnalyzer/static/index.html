@@ -222,6 +222,16 @@
           <button type="submit">Run Backtest</button>
         </form>
 
+        <div class="mock-section validation-section">
+          <h3>Model validation (historic accuracy)</h3>
+          <p class="hint">Walk-forward test from up to 40 years of price data. Weights auto-adjust when predictions miss.</p>
+          <div class="search-row">
+            <input id="validateSymbol" type="text" placeholder="0700.HK or AAPL" value="0700.HK" />
+            <button type="button" id="runValidationBtn">Validate & adapt</button>
+          </div>
+          <div class="hidden" id="validationResults"></div>
+        </div>
+
         <div class="hidden" id="mockResults">
           <div class="trend-hero" id="mockSummary"></div>
           <div class="comparison-banner hidden" id="mockComparison"></div>

@@ -143,6 +143,47 @@ def backtest(
         raise HTTPException(status_code=500, detail="Backtest failed") from exc
 
 
+@app.get("/api/validate/weights")
+def validate_weights() -> dict:
+    from app.adaptive_model import load_model_state, load_validation_metrics
+
+    return {
+        "model": load_model_state(),
+        "last_validation": load_validation_metrics(),
+    }
+
+
+@app.post("/api/validate/run")
+def validate_run(
+    symbol: str = Query(...),
+    adapt: bool = Query(True),
+    max_steps: int | None = Query(None, ge=10, le=500),
+) -> dict:
+    from app.validation import run_validation
+
+    try:
+        return run_validation(symbol, adapt=adapt, max_steps=max_steps)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/validate/batch")
+def validate_batch(
+    symbols: str = Query("0700.HK,9988.HK,AAPL,MSFT"),
+    adapt: bool = Query(True),
+) -> dict:
+    from app.backtest import parse_symbol_list
+    from app.validation import run_validation_batch
+
+    symbol_list = parse_symbol_list(symbols)
+    if not symbol_list:
+        raise HTTPException(status_code=400, detail="Provide at least one symbol")
+    try:
+        return run_validation_batch(symbol_list, adapt=adapt)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")

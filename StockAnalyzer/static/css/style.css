@@ -827,7 +827,11 @@ button:hover {
   margin-bottom: 4px;
 }
 
-.comparison-grid strong {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 1rem;
+.validation-section h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.validation-section .hint {
+  margin-bottom: 12px;
 }

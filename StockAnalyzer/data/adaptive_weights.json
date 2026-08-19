@@ -1,0 +1,11 @@
+{
+  "weights": {
+    "technical": 0.362,
+    "news": 0.399,
+    "behavior": 0.2391,
+    "threshold": 0.25,
+    "learning_rate": 0.02
+  },
+  "updates": 254,
+  "history": []
+}

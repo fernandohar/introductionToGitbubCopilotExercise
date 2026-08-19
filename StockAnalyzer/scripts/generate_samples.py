@@ -30,7 +30,7 @@ SAMPLES = {
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "data" / "samples"
 
 
-def generate_series(symbol: str, config: dict, days: int = 400) -> list[dict]:
+def generate_series(symbol: str, config: dict, days: int = 15000) -> list[dict]:
     rng = random.Random(symbol)
     price = config["start"]
     start_date = datetime.now(timezone.utc).date() - timedelta(days=days)

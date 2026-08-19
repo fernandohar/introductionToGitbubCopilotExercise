@@ -9,7 +9,7 @@ A mobile-friendly web app for analyzing **Hong Kong (HKEX)** and US stocks with 
 - **Buy/sell behavior** — Volume ratio, 5-day momentum, and close-position buy pressure
 - **Technical analysis** — RSI, MACD, Bollinger Bands, moving averages
 - **Fundamentals & compare** — Key ratios and normalized performance charts
-- **Mock Market backtest** — Pick a past date, get a portfolio, test if it would have made money
+- **Mock Market backtest** — Pick a past date, custom stock lists, adjustable portfolio size, manual pick comparison
 - **Mobile-ready UI** — Works in phone browsers with collapsible sidebar
 
 ## Quick start (local)
