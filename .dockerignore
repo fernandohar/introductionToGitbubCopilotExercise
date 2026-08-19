@@ -1,0 +1,9 @@
+StockAnalyzer/.venv
+StockAnalyzer/app/__pycache__
+StockAnalyzer/app/providers/__pycache__
+**/__pycache__
+**/*.pyc
+.git
+UnoMultiplayer
+GameCatalog
+project.yml
